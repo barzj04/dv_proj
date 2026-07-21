@@ -100,7 +100,6 @@ function applyFilters(records){
     if(state.gender && r.gender!==state.gender) return false;
     if(state.stageBand==='early' && !(r.stage==='Stage I'||r.stage==='Stage II')) return false;
     if(state.stageBand==='late' && !(r.stage==='Stage III'||r.stage==='Stage IV')) return false;
-    // substage filter takes precedence when set
     if(state.stageSubstage && r.stage_raw!==state.stageSubstage) return false;
     if(state.stageDrill && !state.stageSubstage && r.stage!==state.stageDrill) return false;
     if(!state.stageSubstage && !state.stageDrill && state.stage && r.stage!==state.stage) return false;
@@ -177,7 +176,6 @@ d3.select('#resetBtn').on('click', ()=>{
   refreshAll();
 });
 
-// Simplified-mode icon buttons: mirror the same state object the dropdown filters use
 d3.selectAll('.icon-btn[data-key]').on('click', function(){
   const key = this.getAttribute('data-key');
   const value = this.getAttribute('data-value');
@@ -340,7 +338,7 @@ function renderChoroplethMap(recs) {
   const H = 380;
   svg.attr('viewBox', `0 0 ${width} ${H}`);
 
-  // Group patient sample counts by numeric ISO ID
+  
   const countsByIso = d3.rollup(
     recs.filter(r => r.country && r.country !== 'Not Reported'),
     v => v.length,
@@ -359,19 +357,14 @@ function renderChoroplethMap(recs) {
     .interpolator(d3.interpolateYlOrRd);
 
   function drawMap(worldData) {
-    // 1. Create a container <g> group specifically for zoomable elements
     const g = svg.append('g').attr('class', 'map-layer');
-
-    // 2. Attach d3.zoom() to the main SVG container
     const zoom = d3.zoom()
-      .scaleExtent([1, 8]) // Sets zoom limits (1x min, 8x max)
+      .scaleExtent([1, 8]) 
       .on('zoom', (event) => {
-        g.attr('transform', event.transform); // Applies transform to the map layer
+        g.attr('transform', event.transform); 
       });
 
     svg.call(zoom);
-
-    // Render country polygons inside the zoomable group 'g'
     const countries = topojson.feature(worldData, worldData.objects.countries).features;
 
     g.selectAll('path')
@@ -412,8 +405,6 @@ function renderChoroplethMap(recs) {
           refreshAll();
         }
       });
-
-    // 3. Render Legend OUTSIDE the zoomable group 'g' (so it stays fixed on screen)
     const legendW = 160, legendH = 10;
     const legendG = svg.append('g').attr('transform', `translate(20, ${H - 35})`);
 
@@ -568,10 +559,14 @@ function lineChart(svgSel, data, opts){
 
 
 function renderParcoords(recs){
+  const container = d3.select('#chartParcoords');
+  container.selectAll('*').remove(); 
+  if (document.getElementById('chartParcoords')) {
+    Plotly.purge('chartParcoords');
+  }
+
   const hasValidFields = recs.some(r => r.age != null || r.pack_years != null || r.lymph_examined != null);
   if(!hasValidFields){
-    const container = d3.select('#chartParcoords');
-    container.selectAll('*').remove();
     container.append('div')
       .style('height','100%')
       .style('display','flex')
@@ -582,6 +577,7 @@ function renderParcoords(recs){
       .text('Parallel coordinates data is not available.');
     return;
   }
+  
   const sample = recs;
   const dimensions = [
     {
@@ -634,7 +630,7 @@ function renderTrellis(recs){
   stageData.forEach(dataset=>{
     const card = panel.append('div').attr('class','trellis-card');
     const svg = card.append('svg').attr('viewBox','0 0 260 150').attr('preserveAspectRatio','xMidYMid meet');
-    const width = 260, height = 150, margin = {top:24,right:14,bottom:30,left:40};
+    const width = 260, height = 150, margin = {top:24,right:14,bottom:30,left:48}; 
     const w = width-margin.left-margin.right, h = height-margin.top-margin.bottom;
     const g = svg.append('g').attr('transform',`translate(${margin.left},${margin.top})`);
     const x = d3.scaleLinear().domain([0,allPack]).nice().range([0,w]);
@@ -710,7 +706,6 @@ function renderTable(recs){
 
 function renderTimeline(){
   const container = document.getElementById('timeline');
-  // Locate renderTimeline() in script_2.js and enrich the payload like this:
   const items = new vis.DataSet([
     {
       id: 1, 
@@ -773,7 +768,6 @@ function refreshAll(){
   riskMultiples(recs);
 
   const stageOrder=['Stage I','Stage II','Stage III','Stage IV'];
-  // Stage chart: support top-level and drill-to-substage (stage_raw)
   let stageData;
   const stageOpts = {
     xKey:'stage', yKey:'count',
@@ -790,7 +784,6 @@ function refreshAll(){
       return {key:k, count:v, suffix};
     })
     .filter(entry => entry.suffix !== '');
-    // sort by suffix: 'A' first, then 'B'...
     entries.sort((a,b)=>{ if(a.suffix===b.suffix) return a.key.localeCompare(b.key); return a.suffix.localeCompare(b.suffix); });
     stageData = entries.map(e=>({stage:e.key, count:e.count}));
   } else {
