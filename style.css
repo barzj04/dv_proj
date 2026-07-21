@@ -78,17 +78,15 @@ body.mode-accessible .reset-btn,body.mode-accessible .chip,body.mode-accessible 
 body.mode-accessible .insight-card p{font-size:14.5px;}
 body.mode-accessible .insight-card .stat{font-size:26px;}
 
-/* Fix label overflow ONLY for the risk factor cards in High-Contrast mode */
 body.mode-accessible #chartRisk .risk-card {
   min-height: 260px;
 }
 
 body.mode-accessible #chartRisk .risk-card svg {
   height: 250px;
-  overflow: visible; /* Confine overflow fix specifically to risk cards */
+  overflow: visible; 
 }
 
-/* Ensure choropleth SVG clips neatly inside its white card */
 #chartChoropleth {
   overflow: hidden;
   border-radius: var(--radius);
@@ -196,7 +194,6 @@ svg, #chartTrellis svg{max-width:100%;display:block;}
 #chartTrellis .trellis-card svg{width:100%;height:100%;}
 svg text{font-family:'Poppins',sans-serif;}
 
-/* Risk small-multiples responsive cards */
 #chartRisk{display:grid;grid-template-columns:repeat(2,minmax(220px,1fr));gap:12px;align-items:start;}
 #chartRisk{display:grid;grid-template-columns:repeat(2,minmax(220px,1fr));gap:12px;align-items:stretch;}
 #chartRisk .risk-card{background:#FBFCFC;border:1px solid var(--border);border-radius:8px;padding:12px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-height:230px;}
