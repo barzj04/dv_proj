@@ -38,18 +38,8 @@
 <div id="dataError" class="data-error" style="display:none;"></div>
 
 <div class="wrap">
-  <div class="section-label adult-only">Geographic Distribution</div>
-  <div class="panel adult-only" style="margin-top:14px;">
-    <div class="panel-head">
-      <div>
-        <h3>Global Case Distribution by Country</h3>
-        <div class="hint">Hover over countries for sample counts &middot; Click to filter dashboard data</div>
-      </div>
-      <span class="panel-badge">Choropleth Map</span>
-    </div>
-    <svg id="chartChoropleth" width="100%" height="380"></svg>
-  </div>
   <div class="section-label">Filters &amp; Cross-Analysis</div>
+  
   <div class="icon-filter-bar simplified-only" id="iconFilterBar">
     <div class="icon-filter-group">
       <div class="icon-filter-label">Who</div>
@@ -69,6 +59,7 @@
     </div>
     <button class="icon-btn reset" id="iconResetBtn" data-emoji="🔄">Start Over</button>
   </div>
+
   <div class="filter-bar adult-only">
     <div class="filter-group">
       <label>Gender</label>
@@ -93,7 +84,17 @@
     <div class="active-filters" id="activeFilters"></div>
     <button class="reset-btn" id="resetBtn">Reset all filters</button>
   </div>
-
+  <div class="section-label adult-only">Geographic Distribution</div>
+  <div class="panel adult-only" style="margin-top:14px;">
+    <div class="panel-head">
+      <div>
+        <h3>Global Case Distribution by Country</h3>
+        <div class="hint">Hover over countries for sample counts &middot; Click to filter dashboard data</div>
+      </div>
+      <span class="panel-badge">Choropleth Map</span>
+    </div>
+    <svg id="chartChoropleth" width="100%" height="380"></svg>
+  </div>
   <div class="section-label">Key Performance Indicators</div>
   <div class="kpi-grid" id="kpiGrid"></div>
 
@@ -135,8 +136,8 @@
     </div>
   </div>
 
-  <div class="section-label adult-only">Clinical Summaries</div>
-  <div class="grid g2 adult-only">
+  <div class="section-label adult-only elder-hide">Clinical Summaries</div>
+  <div class="grid g2 adult-only elder-hide">
     <div class="panel">
       <div class="panel-head">
         <div><h3>Multivariate Patient Profile</h3><div class="hint">Age, smoking pack-years and lymph node exam counts, coloured by outcome. Drag axis labels to reorder.</div></div>
@@ -153,8 +154,8 @@
     </div>
   </div>
 
-  <div class="section-label adult-only">Risk Factors &amp; Outcomes</div>
-  <div class="grid g2 adult-only" style="margin-top:4px;grid-template-columns:1fr 1fr;align-items:start;">
+  <div class="section-label adult-only elder-hide">Risk Factors &amp; Outcomes</div>
+  <div class="grid g2 adult-only elder-hide" style="margin-top:4px;grid-template-columns:1fr 1fr;align-items:start;">
     <div class="panel">
       <div class="panel-head">
         <div><h3>Mortality Rate by Clinical Risk Factor</h3><div class="hint">Comparative mortality % across smoking pack-year bands</div></div>
@@ -168,8 +169,17 @@
     </div>
   </div>
 
-  <div class="section-label">Project Timeline</div>
-  <div class="panel">
+  <!-- Plain-language substitute shown only in High-Contrast/Elderly mode, replacing the two complex sections above -->
+  <div class="panel elder-only-summary" id="elderSummaryPanel" style="display:none;">
+    <div class="panel-head">
+      <div><h3>What the Detailed Charts Show</h3><div class="hint"></div></div>
+      <span class="panel-badge">Summary</span>
+    </div>
+    <p id="elderSummaryText" class="elder-summary-text"></p>
+  </div>
+
+  <div class="section-label kid-hide elder-hide">Project Timeline</div>
+  <div class="panel kid-hide elder-hide">
     <div class="panel-head">
       <div><h3>Dashboard Development Progress</h3><div class="hint">Drag to pan, scroll to zoom, hover items for detail</div></div>
       <span class="panel-badge">Development timeline</span>
@@ -177,11 +187,11 @@
     <div id="timeline" style="height:130px;"></div>
   </div>
 
-  <div class="section-label">Clinical Observations</div>
-  <div class="insight-grid" id="insightGrid"></div>
+  <div class="section-label kid-hide">Clinical Observations</div>
+  <div class="insight-grid kid-hide" id="insightGrid"></div>
 
-  <div class="section-label">Patient-Level Drill-Down</div>
-  <div class="panel">
+  <div class="section-label kid-hide">Patient-Level Drill-Down</div>
+  <div class="panel kid-hide">
     <div class="panel-head">
       <div><h3 id="drillTitle">All Patients</h3><div class="hint">Filtered from charts above &middot; search by patient ID &middot; <span id="rowCount"></span> records shown</div></div>
       <span class="panel-badge">Patient-level data</span>
@@ -196,7 +206,7 @@
     </div>
   </div>
 
-  <div class="panel data-notes">
+  <div class="panel data-notes kid-hide">
     <button id="dataNotesToggle" class="small-btn">ℹ&nbsp; Data Cleaning &amp; Assumptions</button>
     <div id="dataNotesBody" style="display:none;">
       <ul>
@@ -208,7 +218,7 @@
     </div>
   </div>
 
-  <footer>TEB3133/TFB3133 Data Visualization Project &middot; Dataset: TCGA-ESCA Clinical (3,985 records) &middot; Built with D3.js, Plotly.js &amp; vis-timeline</footer>
+  <footer>TEB3133/TFB3133 Data Visualization Project</footer>
 </div><div class="d3-tooltip" style="display:none;" id="tooltip"></div>
 <script src="script.js"></script>
 </body>

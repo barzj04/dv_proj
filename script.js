@@ -229,11 +229,19 @@ const kpiDefs = [
   {key:'pct_stage_III_IV', label:'Stage III/IV Cases', unit:'%', color:COLORS.risk, fmt:d3.format('.1f')},
   {key:'pct_adenocarcinoma', label:'Adenocarcinoma Share', unit:'%', color:COLORS.primary, fmt:d3.format('.1f')},
 ];
+// Kid mode: fewer cards, rounded numbers, positively-framed (alive % / caught-early % rather than
+// mortality / late-stage), each with a big emoji so it reads without needing the clinical terms.
+const kidKpiDefs = [
+  {key:'total_patients', label:'Patients in this Study', unit:'', color:COLORS.primary, fmt:d3.format(','), emoji:'👥'},
+  {key:'pct_alive', label:'Doing Well', unit:'%', color:COLORS.good, fmt:d3.format('.0f'), emoji:'💚'},
+  {key:'pct_early', label:'Caught Early', unit:'%', color:COLORS.primary, fmt:d3.format('.0f'), emoji:'🟢'},
+];
 function computeKPIs(recs){
   const n = recs.length;
   const dead = recs.filter(r=>r.vital==='Dead').length;
   const ages = recs.map(r=>r.age).filter(x=>x!=null);
   const stage34 = recs.filter(r=>r.stage==='Stage III'||r.stage==='Stage IV').length;
+  const stage12 = recs.filter(r=>r.stage==='Stage I'||r.stage==='Stage II').length;
   const adeno = recs.filter(r=>r.histology==='Adenocarcinoma').length;
   return {
     total_patients:n,
@@ -241,15 +249,24 @@ function computeKPIs(recs){
     avg_age_dx: ages.length? d3.mean(ages):0,
     pct_stage_III_IV: n? stage34/n*100:0,
     pct_adenocarcinoma: n? adeno/n*100:0,
+    pct_alive: n? (n-dead)/n*100:0,
+    pct_early: n? stage12/n*100:0,
   };
 }
 function renderKPIs(recs){
   const vals = computeKPIs(recs);
-  const cards = d3.select('#kpiGrid').selectAll('.kpi-card').data(kpiDefs);
+  const isKid = document.body.classList.contains('mode-simplified');
+  const isElder = document.body.classList.contains('mode-accessible');
+  let defs = isKid ? kidKpiDefs : kpiDefs;
+  if(isElder) defs = defs.filter(d=> d.key!=='pct_adenocarcinoma');
+  const cards = d3.select('#kpiGrid').selectAll('.kpi-card').data(defs, d=>d.key);
+  cards.exit().remove();
   const enter = cards.enter().append('div').attr('class','kpi-card');
+  enter.append('div').attr('class','kid-emoji');
   enter.append('div').attr('class','label');
   enter.append('div').attr('class','value');
   const merged = enter.merge(cards);
+  merged.select('.kid-emoji').style('display', isKid? 'block':'none').text(d=> d.emoji||'');
   merged.select('.label').text(d=>d.label);
   merged.select('.value').html(d=> d.fmt(vals[d.key]) + `<span class="unit">${d.unit}</span>`);
 }
@@ -312,6 +329,14 @@ function barChart(svgSel, data, opts){
       }
       refreshAll();
     });
+  if(document.body.classList.contains('mode-accessible')){
+    g.selectAll('.bar-value-label').data(data).enter().append('text')
+      .attr('class','bar-value-label')
+      .attr('x', d=>x(d[xKey])+x.bandwidth()/2)
+      .attr('y', d=> (d[yKey]===0 ? h-2 : y(d[yKey])) - 6)
+      .attr('text-anchor','middle')
+      .text(d=> d[yKey].toLocaleString());
+  }
 }
 // Map country names to UN Numeric Codes (used by standard TopoJSON world-atlas)
 const COUNTRY_ISO_MAP = {
@@ -473,12 +498,20 @@ function donutChart(svgSel, data, opts){
       d3.select('#f-'+stateKey).property('value', state[stateKey]);
       refreshAll();
     });
+  if(document.body.classList.contains('mode-accessible')){
+    g.selectAll('.donut-value-label').data(pie(data)).enter().append('text')
+      .attr('class','donut-value-label')
+      .attr('transform', d=> `translate(${arc.centroid(d)})`)
+      .attr('text-anchor','middle')
+      .text(d=> (d.data[valueKey]/total*100).toFixed(0)+'%');
+  }
   g.append('text').attr('text-anchor','middle').attr('dy','-0.1em').style('font-family','Fraunces,serif').style('font-weight',600).style('font-size','20px').text(total.toLocaleString());
   g.append('text').attr('text-anchor','middle').attr('dy','1.3em').style('font-size','10px').style('fill',COLORS.inkSoft).text('cases');
+  const isElderChart = document.body.classList.contains('mode-accessible');
   const legend = svg.append('g').attr('transform',`translate(${width*0.62},${H/2 - data.length*11})`);
   const rows = legend.selectAll('g').data(data).enter().append('g').attr('transform',(d,i)=>`translate(0,${i*22})`);
   rows.append('rect').attr('width',11).attr('height',11).attr('rx',2).attr('fill',d=>color(d[labelKey]));
-  rows.append('text').attr('x',16).attr('y',9.5).style('font-size','11px').style('fill',COLORS.ink).text(d=> d[labelKey].length>20? d[labelKey].slice(0,19)+'…':d[labelKey]);
+  rows.append('text').attr('x',16).attr('y',9.5).style('font-size', isElderChart? '13px':'11px').style('fill',COLORS.ink).text(d=> d[labelKey].length>20? d[labelKey].slice(0,19)+'…':d[labelKey]);
 }
 
 function countBy(recs, key, order){
@@ -677,6 +710,23 @@ function renderInsights(recs){
   merged.select('p').text(d=>d.text);
 }
 
+// Plain-language stand-in for the Clinical Summaries (parallel coords / trellis) and
+// Risk Factors (scatter grid) sections, which are hidden in Elderly mode since they require
+// fine motor hovering and small multi-panel reading.
+function renderElderSummary(recs){
+  if(!document.body.classList.contains('mode-accessible')) return;
+  const stage34 = recs.filter(r=>r.stage==='Stage III'||r.stage==='Stage IV');
+  const stage12 = recs.filter(r=>r.stage==='Stage I'||r.stage==='Stage II');
+  const rate34 = stage34.length? (stage34.filter(r=>r.vital==='Dead').length/stage34.length*100):0;
+  const rate12 = stage12.length? (stage12.filter(r=>r.vital==='Dead').length/stage12.length*100):0;
+  const heavySmokers = recs.filter(r=>r.pack_years!=null && r.pack_years>=40);
+  const heavyRate = heavySmokers.length? (heavySmokers.filter(r=>r.vital==='Dead').length/heavySmokers.length*100):0;
+  const avgLymphLate = d3.mean(stage34.map(r=>r.lymph_examined).filter(x=>x!=null)) || 0;
+  const avgLymphEarly = d3.mean(stage12.map(r=>r.lymph_examined).filter(x=>x!=null)) || 0;
+  const text = `Among the patients currently shown: those diagnosed at Stage III or IV had a mortality rate of about ${rate34.toFixed(0)}%, compared to about ${rate12.toFixed(0)}% for Stage I or II. Heavier smokers (40+ pack-years) had a mortality rate of about ${heavyRate.toFixed(0)}%. On average, later-stage patients also had more positive lymph nodes found (about ${avgLymphLate.toFixed(1)} vs ${avgLymphEarly.toFixed(1)} for early-stage), which points to more advanced disease spread at diagnosis. In short: earlier detection and lower smoking exposure are both linked to better outcomes in this data.`;
+  d3.select('#elderSummaryText').text(text);
+}
+
 function renderTable(recs){
   const title = state.stageSubstage ? `Patients — ${state.stageSubstage}` :
                 state.stageDrill ? `Patients — ${state.stageDrill}` :
@@ -704,46 +754,25 @@ function renderTable(recs){
   merged.select('.vital').html(d=> `<span class="tag ${d.vital==='Dead'?'dead':'alive'}">${d.vital}</span>`);
 }
 
+const TIMELINE_PHASES = [
+  { id:1, title:'Phase 1: Project Initiation', start:'2026-02-16', end:'2026-02-27', className:'done',
+    desc:'Defined clinical problem parameters for senior oncology management analytics.' },
+  { id:2, title:'Phase 2: Data Aggregation', start:'2026-02-28', end:'2026-03-20', className:'done',
+    desc:'Extracted 3,985 multi-departmental registry rows from the TCGA-ESCA clinical data core.' },
+  { id:3, title:'Phase 3: Schema Cleaning', start:'2026-03-21', end:'2026-04-10', className:'done',
+    desc:'Imputed missing values, handled lower-bound adjustments for 1,816 missing pack-years, and normalized stages.' },
+  { id:4, title:'Phase 4: Dashboard Architecture', start:'2026-04-11', end:'2026-06-10', className:'milestone',
+    desc:'Built single-page reactive state engine linking cross-filters, parallel coordinates, and trellis scatter charts.' },
+  { id:5, title:'Phase 5: UX Accessibility Auditing', start:'2026-06-11', end:'2026-06-30', className:'upcoming',
+    desc:'Validating layout reflow and ensuring baseline accessibility for Elderly and Child modes.' },
+  { id:6, title:'Phase 6: Deployment', start:'2026-07-01', end:'2026-07-15', className:'upcoming',
+    desc:'Hosting final build for live corporate executive demonstration.' },
+];
 function renderTimeline(){
   const container = document.getElementById('timeline');
-  const items = new vis.DataSet([
-    {
-      id: 1, 
-      content: '<b>Phase 1: Project Initiation</b>', 
-      start: '2026-02-16', end: '2026-02-27', className: 'done',
-      title: 'Defined clinical problem parameters for senior oncology management analytics.' 
-    },
-    {
-      id: 2, 
-      content: '<b>Phase 2: Data Aggregation</b>', 
-      start: '2026-02-28', end: '2026-03-20', className: 'done',
-      title: 'Extracted 3,985 multi-departmental registry rows from the TCGA-ESCA clinical data core.'
-    },
-    {
-      id: 3, 
-      content: '<b>Phase 3: Schema Cleaning</b>', 
-      start: '2026-03-21', end: '2026-04-10', className: 'done',
-      title: 'Imputed missing values, handled lower-bound adjustments for 1,816 missing pack-years, and normalized stages.'
-    },
-    {
-      id: 4, 
-      content: '<b>Phase 4: Dashboard Architecture</b>', 
-      start: '2026-04-11', end: '2026-06-10', className: 'milestone',
-      title: 'Built single-page reactive state engine linking Cross-filters, Plotly Parallel Coordinates, and D3 Trellis scatter charts.'
-    },
-    {
-      id: 5, 
-      content: '<b>Phase 5: UX Accessibility Auditing</b>', 
-      start: '2026-06-11', end: '2026-06-30', className: 'upcoming',
-      title: 'Validating layout reflow capabilities and ensuring screen-reader baseline compatibility for Elderly and Child modes.'
-    },
-    {
-      id: 6, 
-      content: '<b>Phase 6: Deployment</b>', 
-      start: '2026-07-01', end: '2026-07-15', className: 'upcoming',
-      title: 'Hosting final build via web server architectures for live corporate executive demonstration.'
-    }
-  ]);
+  const items = new vis.DataSet(TIMELINE_PHASES.map(p=>({
+    id:p.id, content:`<b>${p.title}</b>`, start:p.start, end:p.end, className:p.className, title:p.desc
+  })));
   const options = { stack:false, showCurrentTime:true, margin:{item:14}, orientation:'top',
     min:'2026-02-10', max:'2026-07-20' };
   new vis.Timeline(container, items, options);
@@ -814,6 +843,7 @@ function refreshAll(){
   }
 
   renderInsights(recs);
+  renderElderSummary(recs);
   renderTable(recs);
 }
 
