@@ -53,6 +53,11 @@ a{color:var(--primary-dark);}
 
 /* ---------- View modes (Task 2: Early Childhood / Adult / Elderly) ---------- */
 body.mode-simplified .adult-only{display:none !important;}
+/* Kid mode: strip out the dense/textual bottom-of-page sections entirely */
+body.mode-simplified .kid-hide{display:none !important;}
+/* Elderly mode: hide the hardest-to-read advanced/multi-panel charts, show a plain-language substitute instead */
+body.mode-accessible .elder-hide{display:none !important;}
+body.mode-accessible .elder-only-summary{display:block !important;}
 body.mode-simplified .kpi-grid{grid-template-columns:repeat(3,1fr);}
 body.mode-simplified .kpi-card .value{font-size:34px;}
 body.mode-simplified .kpi-card .label{font-size:12.5px;}
@@ -64,7 +69,29 @@ body.mode-accessible .search-box input{font-size:16px;padding:10px 14px 10px 38p
 body.mode-accessible .search-box svg{left:12px;width:16px;height:16px;}
 body.mode-simplified .g2, body.mode-simplified .g3{grid-template-columns:1fr;}
 
+/* --- Kid mode: playful, low-density restyle --- */
+body.mode-simplified{background:#F5F9F3;}
+body.mode-simplified .header{background:linear-gradient(135deg,#2B8A5E 0%,#4C956C 100%);}
+body.mode-simplified .kpi-grid{grid-template-columns:repeat(3,1fr);gap:16px;}
+body.mode-simplified .kpi-card{
+  border-radius:20px;border-width:3px;text-align:center;padding:22px 16px;
+  box-shadow:0 4px 16px rgba(76,149,108,.18);
+}
+body.mode-simplified .kpi-card .label{font-size:13.5px;}
+body.mode-simplified .kpi-card .value{font-size:40px;}
+body.mode-simplified .kpi-card .kid-emoji{font-size:30px;display:block;margin-bottom:6px;}
+body.mode-simplified .section-label{
+  font-family:'Poppins',sans-serif;font-size:14px;letter-spacing:0;text-transform:none;font-weight:700;
+  color:#265A3D;
+}
+body.mode-simplified .section-label::after{background:none;}
+body.mode-simplified .panel{border-radius:18px;border-width:2px;}
+body.mode-simplified .panel-head .hint{display:none;}
+body.mode-simplified .panel-badge{display:none;}
+body.mode-simplified .panel-head h3{font-size:17px;}
+
 body.mode-accessible{font-size:17px;}
+body.mode-accessible .axis text{font-size:12.5px;}
 body.mode-accessible .kpi-card .value{font-size:32px;}
 body.mode-accessible .kpi-card .label{font-size:13px;}
 body.mode-accessible .panel-head h3{font-size:18px;}
@@ -85,6 +112,24 @@ body.mode-accessible #chartRisk .risk-card {
 body.mode-accessible #chartRisk .risk-card svg {
   height: 250px;
   overflow: visible; 
+}
+
+/* --- Elderly mode: reduce density, avoid hover-only interactions --- */
+body.mode-accessible .g2, body.mode-accessible .g3{grid-template-columns:1fr;}
+body.mode-accessible .kpi-grid{grid-template-columns:repeat(2,1fr);gap:14px;}
+body.mode-accessible .panel{padding:20px 22px 18px;}
+body.mode-accessible .filter-group select,
+body.mode-accessible .icon-btn,
+body.mode-accessible .small-btn,
+body.mode-accessible .reset-btn,
+body.mode-accessible .view-toggle button{min-height:44px;}
+body.mode-accessible .chip{padding:8px 12px;font-size:14px;}
+
+.elder-only-summary{display:none;}
+.elder-summary-text{font-size:15px;line-height:1.7;color:var(--ink);}
+body.mode-accessible .d3-tooltip{font-size:15px;padding:10px 14px;max-width:260px;}
+body.mode-accessible .bar-value-label, body.mode-accessible .donut-value-label{
+  font-size:13px;font-weight:600;fill:var(--ink);
 }
 
 #chartChoropleth {
