@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Esophageal Cancer Clinical Dashboard</title>
@@ -37,7 +38,17 @@
 <div id="dataError" class="data-error" style="display:none;"></div>
 
 <div class="wrap">
-
+  <div class="section-label adult-only">Geographic Distribution</div>
+  <div class="panel adult-only" style="margin-top:14px;">
+    <div class="panel-head">
+      <div>
+        <h3>Global Case Distribution by Country (Choropleth Map)</h3>
+        <div class="hint">Hover over countries for sample counts &middot; Click to filter dashboard data</div>
+      </div>
+      <span class="panel-badge">Choropleth Map</span>
+    </div>
+    <svg id="chartChoropleth" width="100%" height="380"></svg>
+  </div>
   <div class="section-label">Filters &amp; Cross-Analysis</div>
   <div class="icon-filter-bar simplified-only" id="iconFilterBar">
     <div class="icon-filter-group">
