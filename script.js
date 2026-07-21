@@ -315,6 +315,147 @@ function barChart(svgSel, data, opts){
       refreshAll();
     });
 }
+// Map country names to UN Numeric Codes (used by standard TopoJSON world-atlas)
+const COUNTRY_ISO_MAP = {
+  'United States': '840',
+  'Vietnam': '704',
+  'Brazil': '076',
+  'Canada': '124',
+  'Netherlands': '528',
+  'Russia': '643',
+  'Ukraine': '804',
+  'Bulgaria': '100',
+  'Australia': '036',
+  'United Kingdom': '826'
+};
+
+let cachedWorldData = null;
+
+function renderChoroplethMap(recs) {
+  const svg = d3.select('#chartChoropleth');
+  svg.selectAll('*').remove();
+
+  const bbox = svg.node().getBoundingClientRect();
+  const width = bbox.width || 800;
+  const H = 380;
+  svg.attr('viewBox', `0 0 ${width} ${H}`);
+
+  // Group patient sample counts by numeric ISO ID
+  const countsByIso = d3.rollup(
+    recs.filter(r => r.country && r.country !== 'Not Reported'),
+    v => v.length,
+    d => COUNTRY_ISO_MAP[d.country]
+  );
+
+  const projection = d3.geoNaturalEarth1()
+    .scale(width / 6.5)
+    .translate([width / 2, H / 1.75]);
+
+  const path = d3.geoPath().projection(projection);
+
+  const maxCount = d3.max(Array.from(countsByIso.values())) || 1787;
+  const colorScale = d3.scaleSequential()
+    .domain([0, maxCount])
+    .interpolator(d3.interpolateYlOrRd);
+
+  function drawMap(worldData) {
+    // 1. Create a container <g> group specifically for zoomable elements
+    const g = svg.append('g').attr('class', 'map-layer');
+
+    // 2. Attach d3.zoom() to the main SVG container
+    const zoom = d3.zoom()
+      .scaleExtent([1, 8]) // Sets zoom limits (1x min, 8x max)
+      .on('zoom', (event) => {
+        g.attr('transform', event.transform); // Applies transform to the map layer
+      });
+
+    svg.call(zoom);
+
+    // Render country polygons inside the zoomable group 'g'
+    const countries = topojson.feature(worldData, worldData.objects.countries).features;
+
+    g.selectAll('path')
+      .data(countries)
+      .enter()
+      .append('path')
+      .attr('class', 'choropleth-country')
+      .attr('d', path)
+      .attr('fill', d => {
+        const id = String(d.id).padStart(3, '0');
+        const count = countsByIso.get(id);
+        return count ? colorScale(count) : '#e2e8f0';
+      })
+      .attr('stroke', '#ffffff')
+      .attr('stroke-width', 0.6)
+      .style('cursor', d => {
+        const id = String(d.id).padStart(3, '0');
+        return countsByIso.has(id) ? 'pointer' : 'default';
+      })
+      .classed('dim', d => {
+        if (!state.country) return false;
+        const id = String(d.id).padStart(3, '0');
+        return COUNTRY_ISO_MAP[state.country] !== id;
+      })
+      .on('mousemove', (evt, d) => {
+        const id = String(d.id).padStart(3, '0');
+        const countryName = Object.keys(COUNTRY_ISO_MAP).find(k => COUNTRY_ISO_MAP[k] === id) || d.properties.name || 'Other Region';
+        const count = countsByIso.get(id) || 0;
+        showTip(`<b>${countryName}</b><br>${count.toLocaleString()} cases`, evt);
+      })
+      .on('mouseleave', hideTip)
+      .on('click', (evt, d) => {
+        const id = String(d.id).padStart(3, '0');
+        const matchedCountry = Object.keys(COUNTRY_ISO_MAP).find(k => COUNTRY_ISO_MAP[k] === id);
+        if (matchedCountry) {
+          state.country = state.country === matchedCountry ? '' : matchedCountry;
+          d3.select('#f-country').property('value', state.country);
+          refreshAll();
+        }
+      });
+
+    // 3. Render Legend OUTSIDE the zoomable group 'g' (so it stays fixed on screen)
+    const legendW = 160, legendH = 10;
+    const legendG = svg.append('g').attr('transform', `translate(20, ${H - 35})`);
+
+    const defs = svg.append('defs');
+    const linearGradient = defs.append('linearGradient').attr('id', 'choropleth-gradient');
+
+    linearGradient.selectAll('stop')
+      .data(d3.range(0, 1.1, 0.2))
+      .enter().append('stop')
+      .attr('offset', d => `${d * 100}%`)
+      .attr('stop-color', d => colorScale(d * maxCount));
+
+    legendG.append('rect')
+      .attr('width', legendW)
+      .attr('height', legendH)
+      .style('fill', 'url(#choropleth-gradient)')
+      .attr('rx', 2);
+
+    const legendScale = d3.scaleLinear().domain([0, maxCount]).range([0, legendW]);
+    const legendAxis = d3.axisBottom(legendScale).ticks(3).tickSize(3);
+
+    legendG.append('g')
+      .attr('transform', `translate(0, ${legendH})`)
+      .call(legendAxis)
+      .selectAll('text')
+      .style('font-size', '9px')
+      .style('fill', COLORS.inkSoft);
+  }
+
+  if (cachedWorldData) {
+    drawMap(cachedWorldData);
+  } else {
+    d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+      .then(worldData => {
+        cachedWorldData = worldData;
+        drawMap(worldData);
+      })
+      .catch(err => {
+        console.error('Error loading world map GeoJSON:', err);
+      });
+  }
+}
 
 function donutChart(svgSel, data, opts){
   const {labelKey, valueKey, stateKey, height} = opts;
@@ -617,6 +758,7 @@ function refreshAll(){
   const recs = applyFilters(DATA.records);
   renderActiveChips();
   renderKPIs(recs);
+  renderChoroplethMap(recs);
   donutChart('#chartHistology', countBy(recs,'histology').map(d=>({type:d.key,count:d.count})),
     {labelKey:'type', valueKey:'count', stateKey:'histology', height:260});
   barChart('#chartAge', countBy(recs,'age_group', ['<50','50-59','60-69','70-79','80+']).map(d=>({group:d.key,count:d.count})),
