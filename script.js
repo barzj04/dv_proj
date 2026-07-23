@@ -899,29 +899,59 @@ function renderChoroplethMap(recs) {
 
 function donutChart(svgSel, data, opts) {
   const { labelKey, valueKey, stateKey, height } = opts;
+
   const svg = d3.select(svgSel);
   svg.selectAll("*").remove();
-  const bbox = svg.node().getBoundingClientRect();
-  const width = bbox.width || 300;
-  const H = height || 240;
-  svg.attr("viewBox", `0 0 ${width} ${H}`);
-  const radius = Math.min(width * 0.42, H * 0.42);
+
+  const node = svg.node();
+  const measuredWidth = node.getBoundingClientRect().width;
+  const width = Math.max(measuredWidth || 300, 260);
+
+  const isMobile = width < 520;
+  const normalHeight = height || 240;
+
+  /*
+   * On mobile, the donut appears above the legend.
+   * Extra height is provided for the legend rows.
+   */
+  const H = isMobile
+    ? Math.max(normalHeight, 190 + data.length * 30)
+    : normalHeight;
+
+  svg
+    .attr("viewBox", `0 0 ${width} ${H}`)
+    .attr("width", "100%")
+    .attr("height", H)
+    .attr("preserveAspectRatio", "xMidYMid meet");
+
+  const radius = isMobile
+    ? Math.min(width * 0.24, 72)
+    : Math.min(width * 0.2, H * 0.38);
+
+  const donutX = isMobile ? width / 2 : width * 0.3;
+  const donutY = isMobile ? 88 : H / 2;
+
   const g = svg
     .append("g")
-    .attr("transform", `translate(${width * 0.32},${H / 2})`);
+    .attr("transform", `translate(${donutX}, ${donutY})`);
+
   const color = d3
     .scaleOrdinal()
     .domain(data.map((d) => d[labelKey]))
     .range(COLORS.categorical);
+
   const pie = d3
     .pie()
     .value((d) => d[valueKey])
     .sort(null);
+
   const arc = d3
     .arc()
     .innerRadius(radius * 0.55)
     .outerRadius(radius);
+
   const total = d3.sum(data, (d) => d[valueKey]);
+
   g.selectAll("path")
     .data(pie(data))
     .enter()
@@ -934,20 +964,33 @@ function donutChart(svgSel, data, opts) {
       (d) =>
         stateKey && state[stateKey] && state[stateKey] !== d.data[labelKey],
     )
-    .on("mousemove", (evt, d) =>
+    .on("mousemove", (event, d) => {
+      const percentage = total ? (d.data[valueKey] / total) * 100 : 0;
+
       showTip(
-        `<b>${d.data[labelKey]}</b><br>${d.data[valueKey].toLocaleString()} (${((d.data[valueKey] / total) * 100).toFixed(1)}%)`,
-        evt,
-      ),
-    )
+        `
+          <b>${d.data[labelKey]}</b><br>
+          ${d.data[valueKey].toLocaleString()} cases<br>
+          ${percentage.toFixed(1)}%
+        `,
+        event,
+      );
+    })
     .on("mouseleave", hideTip)
-    .on("click", (evt, d) => {
+    .on("click", (event, d) => {
       if (!stateKey) return;
+
       state[stateKey] =
         state[stateKey] === d.data[labelKey] ? "" : d.data[labelKey];
-      d3.select("#f-" + stateKey).property("value", state[stateKey]);
+
+      d3.select(`#f-${stateKey}`).property("value", state[stateKey]);
+
       refreshAll();
     });
+
+  /*
+   * Percentage labels remain available in Elderly View.
+   */
   if (document.body.classList.contains("mode-accessible")) {
     g.selectAll(".donut-value-label")
       .data(pie(data))
@@ -956,49 +999,80 @@ function donutChart(svgSel, data, opts) {
       .attr("class", "donut-value-label")
       .attr("transform", (d) => `translate(${arc.centroid(d)})`)
       .attr("text-anchor", "middle")
-      .text((d) => ((d.data[valueKey] / total) * 100).toFixed(0) + "%");
+      .text((d) => {
+        const percentage = total ? (d.data[valueKey] / total) * 100 : 0;
+
+        return `${percentage.toFixed(0)}%`;
+      });
   }
+
+  /* Number in the centre of the donut */
   g.append("text")
     .attr("text-anchor", "middle")
     .attr("dy", "-0.1em")
-    .style("font-family", "Fraunces,serif")
     .style("font-weight", 600)
-    .style("font-size", "20px")
+    .style("font-size", isMobile ? "17px" : "20px")
+    .style("fill", COLORS.ink)
     .text(total.toLocaleString());
+
   g.append("text")
     .attr("text-anchor", "middle")
     .attr("dy", "1.3em")
     .style("font-size", "10px")
     .style("fill", COLORS.inkSoft)
     .text("cases");
-  const isElderChart = document.body.classList.contains("mode-accessible");
+
+  /*
+   * Desktop: legend appears on the right.
+   * Mobile: legend appears underneath the donut.
+   */
+  const legendX = isMobile ? 18 : width * 0.58;
+  const legendY = isMobile ? 180 : H / 2 - (data.length * 22) / 2;
+
+  const legendGap = isMobile ? 28 : 22;
+
   const legend = svg
     .append("g")
-    .attr(
-      "transform",
-      `translate(${width * 0.62},${H / 2 - data.length * 11})`,
-    );
+    .attr("class", "donut-legend")
+    .attr("transform", `translate(${legendX}, ${legendY})`);
+
   const rows = legend
-    .selectAll("g")
+    .selectAll(".donut-legend-row")
     .data(data)
     .enter()
     .append("g")
-    .attr("transform", (d, i) => `translate(0,${i * 22})`);
+    .attr("class", "donut-legend-row")
+    .attr("transform", (d, i) => `translate(0, ${i * legendGap})`);
+
   rows
     .append("rect")
-    .attr("width", 11)
-    .attr("height", 11)
+    .attr("width", 12)
+    .attr("height", 12)
     .attr("rx", 2)
     .attr("fill", (d) => color(d[labelKey]));
+
   rows
     .append("text")
-    .attr("x", 16)
-    .attr("y", 9.5)
-    .style("font-size", isElderChart ? "13px" : "11px")
+    .attr("x", 19)
+    .attr("y", 10)
+    .style(
+      "font-size",
+      document.body.classList.contains("mode-accessible") ? "13px" : "11px",
+    )
     .style("fill", COLORS.ink)
-    .text((d) =>
-      d[labelKey].length > 20 ? d[labelKey].slice(0, 19) + "…" : d[labelKey],
-    );
+    .text((d) => {
+      const label = String(d[labelKey]);
+
+      /*
+       * Desktop remains compact.
+       * Mobile has more horizontal room because the legend is below.
+       */
+      const maximumLength = isMobile ? 34 : 20;
+
+      return label.length > maximumLength
+        ? `${label.slice(0, maximumLength - 1)}…`
+        : label;
+    });
 }
 
 function countBy(recs, key, order) {
@@ -1064,9 +1138,15 @@ function riskMultiples(recs) {
         .text("Not enough data");
       return;
     }
-    const vbW = 450,
-      vbH = 220,
-      margin = { l: 20, r: 10, t: 10, b: 42 };
+    const vbW = 450;
+    const vbH = 250;
+
+    const margin = {
+      l: 42,
+      r: 14,
+      t: 12,
+      b: 68,
+    };
     const svg = card
       .append("svg")
       .attr("viewBox", `0 0 ${vbW} ${vbH}`)
@@ -1091,7 +1171,7 @@ function riskMultiples(recs) {
       .call(d3.axisBottom(x).tickSizeOuter(0))
       .selectAll("text")
       .style("font-size", "9px")
-      .attr("transform", "rotate(-20)")
+      .attr("transform", "rotate(-30)")
       .style("text-anchor", "end")
       .attr("fill", COLORS.inkSoft);
     g.append("g")
