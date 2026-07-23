@@ -1,227 +1,434 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Esophageal Cancer Clinical Dashboard</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
-<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/vis-timeline/7.7.3/vis-timeline-graph2d.min.js"></script>
-<link href="https://cdnjs.cloudflare.com/ajax/libs/vis-timeline/7.7.3/vis-timeline-graph2d.min.css" rel="stylesheet">
-</head>
-<body class="mode-standard">
-<div class="header">
-  <div class="header-top">
-    <div class="title-block">
-      <div class="eyebrow">TCGA-ESCA Registry Overview</div>
-      <h1>Esophageal Cancer Clinical Dashboard</h1>
-      <div class="sub">Aggregate review of 3,985 TCGA-ESCA cases for stage, histology, and outcomes.</div>
-    </div>
-    <div class="header-actions">
-      <div class="search-box">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input id="patientSearch" placeholder="  Search patient ID&hellip;">
-      </div>
-      <div class="view-toggle" id="viewToggle">
-        <button data-mode="simplified">Simplified</button>
-        <button data-mode="standard" class="active">Standard</button>
-        <button data-mode="accessible">High-Contrast</button>
-      </div>
-    </div>
-  </div>
-</div>
-<div id="dataError" class="data-error" style="display:none;"></div>
-
-<div class="wrap">
-  
-  <div class="section-label">Filters &amp; Cross-Analysis</div>
-  
-  <div class="icon-filter-bar simplified-only" id="iconFilterBar">
-    <div class="icon-filter-group">
-      <div class="icon-filter-label">Who</div>
-      <div class="icon-filter-row">
-        <button class="icon-btn" data-key="gender" data-value="" data-emoji="👥">Everyone</button>
-        <button class="icon-btn" data-key="gender" data-value="Male" data-emoji="👨">Male</button>
-        <button class="icon-btn" data-key="gender" data-value="Female" data-emoji="👩">Female</button>
-      </div>
-    </div>
-    <div class="icon-filter-group">
-      <div class="icon-filter-label">How Serious</div>
-      <div class="icon-filter-row">
-        <button class="icon-btn black" data-key="stageBand" data-value="" data-emoji="⚫">All</button>
-        <button class="icon-btn green" data-key="stageBand" data-value="early" data-emoji="🟢">Early</button>
-        <button class="icon-btn red" data-key="stageBand" data-value="late" data-emoji="🔴">Late</button>
-      </div>
-    </div>
-    <button class="icon-btn reset" id="iconResetBtn" data-emoji="🔄">Start Over</button>
-  </div>
-  <div class="filter-bar adult-only">
-    <div class="filter-group">
-      <label>Gender</label>
-      <select id="f-gender"><option value="">All</option></select>
-    </div>
-    <div class="filter-group">
-      <label>Cancer Stage</label>
-      <select id="f-stage"><option value="">All</option></select>
-    </div>
-    <div class="filter-group">
-      <label>Histology</label>
-      <select id="f-histology"><option value="">All</option></select>
-    </div>
-    <div class="filter-group">
-      <label>Age Group</label>
-      <select id="f-age"><option value="">All</option></select>
-    </div>
-    <div class="filter-group adult-only">
-      <label>Country of Procurement</label>
-      <select id="f-country"><option value="">All</option></select>
-    </div>
-    <div class="active-filters" id="activeFilters"></div>
-    <button class="reset-btn" id="resetBtn">Reset all filters</button>
-  </div>
-
-  <div class="section-label adult-only elder-hide">Geographic Distribution</div>
-  <div class="panel adult-only elder-hide" style="margin-top:14px;">
-    <div class="panel-head">
-      <div>
-        <h3>Global Case Distribution by Country</h3>
-        <div class="hint">Hover over countries for sample counts &middot; Click to filter dashboard data</div>
-      </div>
-      <span class="panel-badge">Choropleth Map</span>
-    </div>
-    <svg id="chartChoropleth" width="100%" height="380"></svg>
-  </div>
-
-  <div class="section-label">Key Performance Indicators</div>
-  <div class="kpi-grid" id="kpiGrid"></div>
-
-  <div class="section-label">Case Distribution &amp; Demographics</div>
-  <div class="grid g2">
-    <div class="panel">
-      <div class="panel-head">
-        <div><h3>Patients by Cancer Stage</h3><div class="hint">Click a bar to filter and drill down &middot; hover for detail</div></div>
-        <div class="panel-meta">
-          <button id="stageDrillDown" class="small-btn" style="display:none;">Drill Down</button>
-          <button id="stageDrillUp" class="small-btn" style="display:none;">Drill Up</button>
-          <button id="stageDrillBack" class="small-btn" style="display:none;">Back to all stages</button>
+  <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Esophageal Cancer Clinical Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-timeline/7.7.3/vis-timeline-graph2d.min.js"></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/vis-timeline/7.7.3/vis-timeline-graph2d.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="mode-standard">
+    <div class="header">
+      <div class="header-top">
+        <div class="title-block">
+          <div class="eyebrow">TCGA-ESCA Registry Overview</div>
+          <h1>Esophageal Cancer Clinical Dashboard</h1>
+          <div class="sub">
+            Aggregate review of 3,985 TCGA-ESCA cases for stage, histology, and
+            outcomes.
+          </div>
         </div>
-        <span class="panel-badge">Stage distribution</span>
+        <div class="header-actions">
+          <div class="search-box">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#fff"
+              stroke-width="2.4"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              id="patientSearch"
+              placeholder="  Search patient ID&hellip;"
+            />
+          </div>
+          <div class="view-toggle" id="viewToggle">
+            <button data-mode="simplified">Child View</button>
+            <button data-mode="standard" class="active">Adult View</button>
+            <button data-mode="accessible">Elderly View</button>
+          </div>
+        </div>
       </div>
-      <svg id="chartStage" width="100%" height="260"></svg>
     </div>
-    <div class="panel">
-      <div class="panel-head">
-        <div><h3>Histological Type</h3><div class="hint">Click a segment to cross-filter</div></div>
-        <span class="panel-badge">Histology distribution</span>
+    <div id="dataError" class="data-error" style="display: none"></div>
+
+    <div class="wrap">
+      <div class="section-label">Filters &amp; Cross-Analysis</div>
+
+      <div class="icon-filter-bar simplified-only" id="iconFilterBar">
+        <div class="icon-filter-group">
+          <div class="icon-filter-label">Who?</div>
+          <div class="icon-filter-row">
+            <button class="icon-btn" data-key="gender" data-value="">
+              <img src="assets/group.png" alt="Everyone" class="icon-img" />
+              <span>Everyone</span>
+            </button>
+            <button class="icon-btn" data-key="gender" data-value="Male">
+              <img src="assets/man.png" alt="Male" class="icon-img" />
+              <span>Male</span>
+            </button>
+            <button class="icon-btn" data-key="gender" data-value="Female">
+              <img src="assets/woman.png" alt="Female" class="icon-img" />
+              <span>Female</span>
+            </button>
+          </div>
+        </div>
+        <div class="icon-filter-group">
+          <div class="icon-filter-label">How Serious is the Cancer?</div>
+          <div class="icon-filter-row">
+            <button
+              class="icon-btn black"
+              data-key="stageBand"
+              data-value=""
+              data-emoji="⚫"
+            >
+              All
+            </button>
+            <button
+              class="icon-btn green"
+              data-key="stageBand"
+              data-value="early"
+              data-emoji="🟢"
+            >
+              Diagnosed Early
+            </button>
+            <button
+              class="icon-btn red"
+              data-key="stageBand"
+              data-value="late"
+              data-emoji="🔴"
+            >
+              Diagnosed Late
+            </button>
+          </div>
+        </div>
+        <button class="icon-btn reset" id="iconResetBtn">
+          <img src="assets/reset.png" alt="Reset" class="icon-img" />
+          <span>Reset</span>
+        </button>
       </div>
-      <svg id="chartHistology" width="100%" height="260"></svg>
-    </div>
-  </div>
+      <div class="filter-bar adult-only">
+        <div class="filter-group">
+          <label>Gender</label>
+          <select id="f-gender">
+            <option value="">All</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Cancer Stage</label>
+          <select id="f-stage">
+            <option value="">All</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Histology</label>
+          <select id="f-histology">
+            <option value="">All</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Age Group</label>
+          <select id="f-age">
+            <option value="">All</option>
+          </select>
+        </div>
+        <div class="filter-group adult-only">
+          <label>Country of Procurement</label>
+          <select id="f-country">
+            <option value="">All</option>
+          </select>
+        </div>
+        <div class="font-size-control elderly-only">
+          <label for="elderFontSize">
+            Font Size
+            <output id="elderFontSizeValue" for="elderFontSize">17px</output>
+          </label>
 
-  <div class="grid g3" style="margin-top:14px;">
-    <div class="panel">
-      <div class="panel-head"><div><h3>Age Group at Diagnosis</h3></div><span class="panel-badge">Age distribution</span></div>
-      <svg id="chartAge" width="100%" height="220"></svg>
-    </div>
-    <div class="panel">
-      <div class="panel-head"><div><h3>Vital Status</h3></div><span class="panel-badge">Survival status</span></div>
-      <svg id="chartVital" width="100%" height="220"></svg>
-    </div>
-    <div class="panel adult-only">
-      <div class="panel-head"><div><h3>Cases by Country of Procurement</h3><div class="hint">Regional case concentration</div></div><span class="panel-badge">Geographic distribution</span></div>
-      <svg id="chartCountry" width="100%" height="220"></svg>
-    </div>
-  </div>
-
-  <div class="section-label adult-only elder-hide">Clinical Summaries</div>
-  <div class="grid g2 adult-only elder-hide">
-    <div class="panel">
-      <div class="panel-head">
-        <div><h3>Multivariate Patient Profile</h3><div class="hint">Age, smoking pack-years and lymph node exam counts, coloured by outcome. Drag axis labels to reorder.</div></div>
-        <span class="panel-badge adv">Multivariate profile</span>
+          <input
+            type="range"
+            id="elderFontSize"
+            min="16"
+            max="22"
+            step="1"
+            value="17"
+            aria-label="Adjust elderly view text size"
+            aria-valuemin="16"
+            aria-valuemax="24"
+            aria-valuenow="17"
+          />
+        </div>
+        <div class="active-filters" id="activeFilters"></div>
+        <button class="reset-btn" id="resetBtn">Reset</button>
       </div>
-      <div id="chartParcoords" style="height:320px;"></div>
-    </div>
-    <div class="panel">
-      <div class="panel-head">
-        <div><h3>Stage-wise Pack-Years vs Lymph Node Exams</h3><div class="hint">Trellis scatter plot showing smoking burden and lymph node involvement by stage.</div></div>
-        <span class="panel-badge adv">Stage-specific metrics</span>
+
+      <div class="section-label adult-only elder-hide">
+        Geographic Distribution
       </div>
-      <div id="chartTrellis"></div>
-    </div>
-  </div>
-
-  <div class="section-label adult-only elder-hide">Risk Factors &amp; Outcomes</div>
-  <div class="grid g2 adult-only elder-hide" style="margin-top:4px;grid-template-columns:1fr 1fr;align-items:start;">
-    <div class="panel">
-      <div class="panel-head">
-        <div><h3>Mortality Rate by Clinical Risk Factor</h3><div class="hint">Comparative mortality % across smoking pack-year bands</div></div>
-        <span class="panel-badge">Mortality comparison</span>
+      <div class="panel adult-only elder-hide" style="margin-top: 14px">
+        <div class="panel-head">
+          <div>
+            <h3>Global Case Distribution by Country</h3>
+            <div class="hint">
+              Hover over countries for sample counts &middot; Click to filter
+              dashboard data
+            </div>
+          </div>
+          <span class="panel-badge">Choropleth Map</span>
+        </div>
+        <svg id="chartChoropleth" width="100%" height="380"></svg>
       </div>
-      <div id="chartRisk" style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;"></div>
-    </div>
-    <div class="panel" style="height: 100%">
-      <div class="panel-head"><div><h3>Resource Utilization: Avg. Positive Lymph Nodes by Stage</h3><div class="hint">Proxy for disease spread and pathology workload by stage.</div></div><span class="panel-badge">Resource utilization</span></div>
-      <svg id="chartResource" width="100%" height="100%"></svg>
-    </div>
-  </div>
 
-  <!-- Plain-language substitute shown only in High-Contrast/Elderly mode, replacing the two complex sections above -->
-  <div class="panel elder-only-summary" id="elderSummaryPanel" style="display:none;">
-    <div class="panel-head">
-      <div><h3>What the Detailed Charts Show</h3></div>
-      <span class="panel-badge">Summary</span>
-    </div>
-    <p id="elderSummaryText" class="elder-summary-text"></p>
-  </div>
+      <div class="section-label">Key Performance Indicators</div>
+      <div class="kpi-grid" id="kpiGrid"></div>
 
-  <div class="section-label kid-hide elder-hide">Project Timeline</div>
-  <div class="panel kid-hide elder-hide">
-    <div class="panel-head">
-      <div><h3>Dashboard Development Progress</h3><div class="hint">Drag to pan, scroll to zoom, hover items for detail</div></div>
-      <span class="panel-badge">Development timeline</span>
-    </div>
-    <div id="timeline" style="height:130px;"></div>
-  </div>
+      <div class="section-label">Case Distribution &amp; Demographics</div>
+      <div class="grid g2">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>Patients by Cancer Stage</h3>
+              <div class="hint">
+                Click a bar to filter and drill down &middot; hover for detail
+              </div>
+            </div>
+            <div class="panel-meta">
+              <button
+                id="stageDrillDown"
+                class="small-btn"
+                style="display: none"
+              >
+                Drill Down
+              </button>
+              <button id="stageDrillUp" class="small-btn" style="display: none">
+                Drill Up
+              </button>
+              <button
+                id="stageDrillBack"
+                class="small-btn"
+                style="display: none"
+              >
+                Back to all stages
+              </button>
+            </div>
+            <span class="panel-badge">Stage distribution</span>
+          </div>
+          <svg id="chartStage" width="100%" height="260"></svg>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>Histological Type</h3>
+              <div class="hint">Click a segment to cross-filter</div>
+            </div>
+            <span class="panel-badge">Histology distribution</span>
+          </div>
+          <svg id="chartHistology" width="100%" height="260"></svg>
+        </div>
+      </div>
 
-  <div class="section-label kid-hide">Clinical Observations</div>
-  <div class="insight-grid kid-hide" id="insightGrid"></div>
+      <div class="grid g3" style="margin-top: 14px">
+        <div class="panel">
+          <div class="panel-head">
+            <div><h3>Age Group at Diagnosis</h3></div>
+            <span class="panel-badge">Age distribution</span>
+          </div>
+          <svg id="chartAge" width="100%" height="220"></svg>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div><h3>Vital Status</h3></div>
+            <span class="panel-badge">Survival status</span>
+          </div>
+          <svg id="chartVital" width="100%" height="220"></svg>
+        </div>
+        <div class="panel adult-only">
+          <div class="panel-head">
+            <div>
+              <h3>Cases by Country of Procurement</h3>
+              <div class="hint">Regional case concentration</div>
+            </div>
+            <span class="panel-badge">Geographic distribution</span>
+          </div>
+          <svg id="chartCountry" width="100%" height="220"></svg>
+        </div>
+      </div>
 
-  <div class="section-label kid-hide">Patient-Level Drill-Down</div>
-  <div class="panel kid-hide">
-    <div class="panel-head">
-      <div><h3 id="drillTitle">All Patients</h3><div class="hint">Filtered from charts above &middot; search by patient ID &middot; <span id="rowCount"></span> records shown</div></div>
-      <span class="panel-badge">Patient-level data</span>
-    </div>
-    <div class="table-wrap">
-      <table class="data-table">
-        <thead><tr>
-          <th>Patient ID</th><th>Gender</th><th>Age Dx</th><th>Stage</th><th>Histology</th><th>Vital Status</th>
-        </tr></thead>
-        <tbody id="tableBody"></tbody>
-      </table>
-    </div>
-  </div>
+      <div class="section-label adult-only elder-hide">Clinical Summaries</div>
+      <div class="grid g2 adult-only elder-hide">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>Multivariate Patient Profile</h3>
+              <div class="hint">
+                Age, smoking pack-years and lymph node exam counts, coloured by
+                outcome. Drag axis labels to reorder.
+              </div>
+            </div>
+            <span class="panel-badge adv">Multivariate profile</span>
+          </div>
+          <div id="chartParcoords" style="height: 320px"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>Stage-wise Pack-Years vs Lymph Node Exams</h3>
+              <div class="hint">
+                Trellis scatter plot showing smoking burden and lymph node
+                involvement by stage.
+              </div>
+            </div>
+            <span class="panel-badge adv">Stage-specific metrics</span>
+          </div>
+          <div id="chartTrellis"></div>
+        </div>
+      </div>
 
-  <div class="panel data-notes kid-hide">
-    <button id="dataNotesToggle" class="small-btn">ℹ&nbsp; Data Cleaning &amp; Assumptions</button>
-    <div id="dataNotesBody" style="display:none;">
-      <ul>
-        <li><b>Missing smoking pack-years</b> (1,816 of 3,985 patients, ~46%): set to 0. This is a documented assumption, not a confirmed zero for every case — treat pack-year averages as a lower bound.</li>
-        <li><b>Missing positive lymph node counts</b> (~1,000 patients): set to 0 for the same reason; the "Resource Utilization" averages should be read as a lower bound too.</li>
-        <li><b>Cancer stage</b>: 498 patients have no recorded pathologic stage. They're counted in every KPI and chart except the Stage breakdown, where they appear as a separate grey "Unknown" bar rather than being silently dropped.</li>
-        <li><b>City of procurement</b> is not currently shown in any chart, so known typos/casing inconsistencies in that raw column (e.g. "Piitsburgh", "LVIV") were not a priority to clean for this version.</li>
-      </ul>
-    </div>
-  </div>
+      <div class="section-label adult-only elder-hide">
+        Risk Factors &amp; Outcomes
+      </div>
+      <div
+        class="grid g2 adult-only elder-hide"
+        style="
+          margin-top: 4px;
+          grid-template-columns: 1fr 1fr;
+          align-items: start;
+        "
+      >
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>Mortality Rate by Clinical Risk Factor</h3>
+              <div class="hint">
+                Comparative mortality % across smoking pack-year bands
+              </div>
+            </div>
+            <span class="panel-badge">Mortality comparison</span>
+          </div>
+          <div
+            id="chartRisk"
+            style="
+              display: flex;
+              flex-wrap: wrap;
+              gap: 10px;
+              align-items: flex-start;
+            "
+          ></div>
+        </div>
+        <div class="panel" style="height: 100%">
+          <div class="panel-head">
+            <div>
+              <h3>Resource Utilization: Avg. Positive Lymph Nodes by Stage</h3>
+              <div class="hint">
+                Proxy for disease spread and pathology workload by stage.
+              </div>
+            </div>
+            <span class="panel-badge">Resource utilization</span>
+          </div>
+          <svg id="chartResource" width="100%" height="100%"></svg>
+        </div>
+      </div>
 
-  <footer>TEB3133/TFB3133 Data Visualization Project</footer>
-</div><div class="d3-tooltip" style="display:none;" id="tooltip"></div>
-<script src="script.js"></script>
-</body>
+      <!-- Plain-language substitute shown only in High-Contrast/Elderly mode, replacing the two complex sections above -->
+      <div
+        class="panel elder-only-summary"
+        id="elderSummaryPanel"
+        style="display: none"
+      >
+        <div class="panel-head">
+          <div><h3>What the Detailed Charts Show</h3></div>
+          <span class="panel-badge">Summary</span>
+        </div>
+        <p id="elderSummaryText" class="elder-summary-text"></p>
+      </div>
+
+      <div class="section-label kid-hide elder-hide">Project Timeline</div>
+      <div class="panel kid-hide elder-hide">
+        <div class="panel-head">
+          <div>
+            <h3>Dashboard Development Progress</h3>
+            <div class="hint">
+              Each phase has its own row, hover a bar for start and end dates
+            </div>
+          </div>
+          <span class="panel-badge">Development timeline</span>
+        </div>
+        <div id="timeline"></div>
+      </div>
+
+      <div class="section-label kid-hide">Clinical Observations</div>
+      <div class="insight-grid kid-hide" id="insightGrid"></div>
+
+      <div class="section-label kid-hide">Patient-Level Drill-Down</div>
+      <div class="panel kid-hide">
+        <div class="panel-head">
+          <div>
+            <h3 id="drillTitle">All Patients</h3>
+            <div class="hint">
+              Filtered from charts above &middot; search by patient ID &middot;
+              <span id="rowCount"></span> records shown
+            </div>
+          </div>
+          <span class="panel-badge">Patient-level data</span>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Patient ID</th>
+                <th>Gender</th>
+                <th>Age Dx</th>
+                <th>Stage</th>
+                <th>Histology</th>
+                <th>Vital Status</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel data-notes kid-hide">
+        <button id="dataNotesToggle" class="small-btn">
+          ℹ&nbsp; Data Cleaning &amp; Assumptions
+        </button>
+        <div id="dataNotesBody" style="display: none">
+          <ul>
+            <li>
+              <b>Missing smoking pack-years</b> (1,816 of 3,985 patients, ~46%):
+              set to 0. This is a documented assumption, not a confirmed zero
+              for every case — treat pack-year averages as a lower bound.
+            </li>
+            <li>
+              <b>Missing positive lymph node counts</b> (~1,000 patients): set
+              to 0 for the same reason; the "Resource Utilization" averages
+              should be read as a lower bound too.
+            </li>
+            <li>
+              <b>Cancer stage</b>: 498 patients have no recorded pathologic
+              stage. They're counted in every KPI and chart except the Stage
+              breakdown, where they appear as a separate grey "Unknown" bar
+              rather than being silently dropped.
+            </li>
+            <li>
+              <b>City of procurement</b> is not currently shown in any chart, so
+              known typos/casing inconsistencies in that raw column (e.g.
+              "Piitsburgh", "LVIV") were not a priority to clean for this
+              version.
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <footer>TEB3133/TFB3133 Data Visualization Project</footer>
+    </div>
+    <div class="d3-tooltip" style="display: none" id="tooltip"></div>
+    <script src="script.js"></script>
+  </body>
 </html>
