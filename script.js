@@ -85,17 +85,37 @@ d3.csv("Esophageal_Dataset_Cleaned.csv", (d) => {
       "<code>python -m http.server</code>, then open <code>http://localhost:8000</code> &mdash; or use VS Code's " +
       '"Live Server" extension.';
   });
-const COLORS = {
+/* ---------- Dashboard colour palettes ---------- */
+
+/*
+ * Original dashboard palette.
+ * These colours remain active when the accessibility toggle is off.
+ */
+const DEFAULT_PALETTE = {
   primary: "#1C6E8C",
   primaryDark: "#0F4C5C",
   primaryPale: "#DCEBEF",
+
   risk: "#C1440E",
   riskPale: "#F5DDD1",
+
   good: "#4C956C",
   goodPale: "#DCEEE2",
+
   gold: "#B8860B",
+
   ink: "#152238",
   inkSoft: "#4A5A6B",
+
+  bg: "#EDF1EF",
+  surface: "#FFFFFF",
+  border: "#D7DEDC",
+  grid: "#E3E8E7",
+
+  mapEmpty: "#E2E8F0",
+  mapStroke: "#FFFFFF",
+  neutral: "#B9C2C0",
+
   categorical: [
     "#1C6E8C",
     "#C1440E",
@@ -105,6 +125,140 @@ const COLORS = {
     "#8E9AAF",
   ],
 };
+
+/*
+ * Blue-orange-first colour-blind-friendly palette.
+ * Additional colours are used when a visualization has more than two groups.
+ */
+const COLOUR_BLIND_PALETTE = {
+  primary: "#0072B2",
+  primaryDark: "#004C78",
+  primaryPale: "#D9EEF9",
+
+  /* Orange replaces the normal red risk colour */
+  risk: "#D55E00",
+  riskPale: "#FCE5D8",
+
+  /* Blue replaces green for positive/alive values */
+  good: "#0072B2",
+  goodPale: "#D9EEF9",
+
+  gold: "#E69F00",
+
+  ink: "#152238",
+  inkSoft: "#374151",
+
+  bg: "#EDF1EF",
+  surface: "#FFFFFF",
+  border: "#C7D1D6",
+  grid: "#C7D1D6",
+
+  mapEmpty: "#E8EEF2",
+  mapStroke: "#FFFFFF",
+  neutral: "#737373",
+
+  categorical: [
+    "#0072B2", // blue
+    "#E69F00", // orange
+    "#56B4E9", // sky blue
+    "#D55E00", // vermillion
+    "#009E73", // bluish green
+    "#CC79A7", // purple
+  ],
+};
+
+/*
+ * COLORS is the active palette used by all chart functions.
+ * It is updated when the view or colour mode changes.
+ */
+const COLORS = {
+  ...DEFAULT_PALETTE,
+  categorical: [...DEFAULT_PALETTE.categorical],
+};
+
+let colourBlindEnabled = false;
+
+function getActivePalette() {
+  const elderlyMode = document.body.classList.contains("mode-accessible");
+
+  const basePalette = colourBlindEnabled
+    ? COLOUR_BLIND_PALETTE
+    : DEFAULT_PALETTE;
+
+  if (!elderlyMode) {
+    return basePalette;
+  }
+
+  /*
+   * Elderly View uses stronger foreground/background contrast.
+   * The selected normal or colour-blind categorical palette is preserved.
+   */
+  return {
+    ...basePalette,
+
+    primary: colourBlindEnabled ? "#0072B2" : "#1C6E8C",
+    primaryDark: "#17324D",
+    primaryPale: colourBlindEnabled ? "#D9EEF9" : "#DCEBEF",
+
+    risk: colourBlindEnabled ? "#D55E00" : "#B54708",
+    riskPale: colourBlindEnabled ? "#FCE5D8" : "#F9E2D5",
+
+    good: colourBlindEnabled ? "#0072B2" : "#2F7D5B",
+    goodPale: colourBlindEnabled ? "#D9EEF9" : "#DDEFE7",
+
+    gold: colourBlindEnabled ? "#E69F00" : "#9A6700",
+
+    ink: "#172033",
+    inkSoft: "#3F4D5A",
+
+    bg: "#F4F6F8",
+    surface: "#FFFFFF",
+    border: "#A5B0BA",
+    grid: "#A5B0BA",
+
+    mapEmpty: "#E7EBEF",
+    mapStroke: "#FFFFFF",
+    neutral: "#6B7280",
+  };
+}
+
+function applyActivePalette() {
+  const palette = getActivePalette();
+
+  /*
+   * Update the JavaScript colours used by D3 and Plotly.
+   */
+  Object.assign(COLORS, palette);
+  COLORS.categorical = [...palette.categorical];
+
+  /*
+   * Update the CSS variables used by the dashboard interface.
+   */
+  const root = document.documentElement;
+
+  const cssVariables = {
+    "--bg": palette.bg,
+    "--surface": palette.surface,
+    "--ink": palette.ink,
+    "--ink-soft": palette.inkSoft,
+    "--primary": palette.primary,
+    "--primary-dark": palette.primaryDark,
+    "--primary-pale": palette.primaryPale,
+    "--accent-risk": palette.risk,
+    "--accent-risk-pale": palette.riskPale,
+    "--accent-good": palette.good,
+    "--accent-good-pale": palette.goodPale,
+    "--accent-gold": palette.gold,
+    "--border": palette.border,
+  };
+
+  Object.entries(cssVariables).forEach(([name, value]) => {
+    root.style.setProperty(name, value);
+  });
+}
+
+/* Apply the normal palette when the dashboard first opens */
+applyActivePalette();
 const tooltip = d3.select("#tooltip");
 function showTip(html, evt) {
   tooltip
@@ -614,10 +768,17 @@ function renderChoroplethMap(recs) {
   const path = d3.geoPath().projection(projection);
 
   const maxCount = d3.max(Array.from(countsByIso.values())) || 1787;
+  const useAccessibleMapColours =
+    colourBlindEnabled || document.body.classList.contains("mode-accessible");
+
   const colorScale = d3
     .scaleSequential()
     .domain([0, maxCount])
-    .interpolator(d3.interpolateYlOrRd);
+    .interpolator(
+      useAccessibleMapColours
+        ? d3.interpolateRgb(COLORS.primaryPale, COLORS.primaryDark)
+        : d3.interpolateYlOrRd,
+    );
 
   function drawMap(worldData) {
     const g = svg.append("g").attr("class", "map-layer");
@@ -643,9 +804,9 @@ function renderChoroplethMap(recs) {
       .attr("fill", (d) => {
         const id = String(d.id).padStart(3, "0");
         const count = countsByIso.get(id);
-        return count ? colorScale(count) : "#e2e8f0";
+        return count ? colorScale(count) : COLORS.mapEmpty;
       })
-      .attr("stroke", "#ffffff")
+      .attr("stroke", COLORS.mapStroke)
       .attr("stroke-width", 0.6)
       .style("cursor", (d) => {
         const id = String(d.id).padStart(3, "0");
@@ -937,7 +1098,12 @@ function riskMultiples(recs) {
       .call(d3.axisLeft(y).ticks(3))
       .selectAll("text")
       .style("font-size", "9px");
-    g.selectAll("path,line").attr("stroke", "#E3E8E7");
+    g.selectAll("path, line")
+      .attr("stroke", COLORS.grid)
+      .attr(
+        "stroke-width",
+        document.body.classList.contains("mode-accessible") ? 1.5 : 1,
+      );
     const rMax = d3.max(data, (d) => d.n) || 1;
     const r = d3.scaleSqrt().domain([0, rMax]).range([3, 12]);
     g.selectAll("circle")
@@ -1070,8 +1236,8 @@ function renderParcoords(recs) {
         line: {
           color: vitalColor,
           colorscale: [
-            [0, "#4C956C"],
-            [1, "#C1440E"],
+            [0, COLORS.good],
+            [1, COLORS.risk],
           ],
           showscale: true,
           colorbar: {
@@ -1086,7 +1252,11 @@ function renderParcoords(recs) {
     ],
     {
       margin: { t: 36, l: 60, r: 40, b: 10 },
-      font: { family: "Poppins, sans-serif", size: 11, color: "#4A5A6B" },
+      font: {
+        family: "Poppins, sans-serif",
+        size: document.body.classList.contains("mode-accessible") ? 14 : 11,
+        color: COLORS.inkSoft,
+      },
       paper_bgcolor: "transparent",
     },
     { displayModeBar: false, responsive: true },
@@ -1614,7 +1784,7 @@ function refreshAll() {
     ]).map((d) => ({
       stage: d.key,
       count: d.count,
-      barColor: d.key === "Unknown" ? "#B9C2C0" : COLORS.primary,
+      barColor: d.key === "Unknown" ? COLORS.neutral : COLORS.primary,
     }));
   }
   stageOpts.colorKey = "barColor";
@@ -1662,12 +1832,68 @@ function refreshAll() {
 
 d3.selectAll("#viewToggle button").on("click", function () {
   const mode = this.getAttribute("data-mode");
+
   d3.selectAll("#viewToggle button").classed("active", false);
   d3.select(this).classed("active", true);
-  document.body.className = "mode-" + mode;
+
+  /*
+   * Remove only the previous user-view class.
+   * Do not remove colour-blind-mode.
+   */
+  document.body.classList.remove(
+    "mode-simplified",
+    "mode-standard",
+    "mode-accessible",
+  );
+
+  document.body.classList.add(`mode-${mode}`);
+
+  /*
+   * Elderly View automatically receives the high-contrast palette.
+   */
+  applyActivePalette();
+
   setTimeout(() => {
-    if (DATA.records.length) refreshAll();
+    if (DATA.records.length) {
+      refreshAll();
+      renderTimeline();
+    }
   }, 60);
+});
+
+const colourBlindToggle = document.getElementById("colourBlindToggle");
+const colourToggleText = document.getElementById("colourToggleText");
+
+colourBlindToggle.addEventListener("click", function () {
+  colourBlindEnabled = !colourBlindEnabled;
+
+  /*
+   * The class controls CSS-only components such as Child View buttons.
+   */
+  document.body.classList.toggle("colour-blind-mode", colourBlindEnabled);
+
+  this.setAttribute("aria-pressed", String(colourBlindEnabled));
+
+  this.setAttribute(
+    "aria-label",
+    colourBlindEnabled
+      ? "Disable colour-blind-friendly colours"
+      : "Enable colour-blind-friendly colours",
+  );
+
+  colourToggleText.textContent = colourBlindEnabled
+    ? "Colour-blind friendly: On"
+    : "Colour-blind friendly: Off";
+
+  /*
+   * Update CSS variables and JavaScript chart colours.
+   */
+  applyActivePalette();
+
+  if (DATA.records.length) {
+    refreshAll();
+    renderTimeline();
+  }
 });
 
 // Elderly font slider

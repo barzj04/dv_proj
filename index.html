@@ -44,10 +44,23 @@
               placeholder="  Search patient ID&hellip;"
             />
           </div>
-          <div class="view-toggle" id="viewToggle">
-            <button data-mode="simplified">Child View</button>
-            <button data-mode="standard" class="active">Adult View</button>
-            <button data-mode="accessible">Elderly View</button>
+          <div class="header-view-controls">
+            <div class="view-toggle" id="viewToggle">
+              <button data-mode="simplified">Child View</button>
+              <button data-mode="standard" class="active">Adult View</button>
+              <button data-mode="accessible">Elderly View</button>
+            </div>
+
+            <button
+              id="colourBlindToggle"
+              class="colour-toggle"
+              type="button"
+              aria-pressed="false"
+              aria-label="Enable colour-blind-friendly colours"
+            >
+              <span class="colour-toggle-switch" aria-hidden="true"></span>
+              <span id="colourToggleText">Colour-blind friendly: Off</span>
+            </button>
           </div>
         </div>
       </div>

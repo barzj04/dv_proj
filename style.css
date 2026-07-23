@@ -1038,11 +1038,6 @@ body.mode-accessible .elderly-only {
   display: flex;
 }
 
-/* Distinct header colour for Elderly View */
-body.mode-accessible .header {
-  background: linear-gradient(135deg, #3c2a5d 0%, #6b4e8a 100%);
-}
-
 /* Font-size slider */
 .font-size-control {
   flex-direction: column;
@@ -1063,7 +1058,7 @@ body.mode-accessible .header {
 }
 
 .font-size-control output {
-  color: #3c2a5d;
+  color: var(--primary);
   font-family: "IBM Plex Mono", monospace;
   font-weight: 600;
 }
@@ -1071,7 +1066,7 @@ body.mode-accessible .header {
 .font-size-control input[type="range"] {
   width: 180px;
   cursor: pointer;
-  accent-color: #6b4e8a;
+  accent-color: var(--primary);
 }
 
 .elderly-filter-actions {
@@ -1207,3 +1202,254 @@ body.mode-accessible .insight-grid {
   grid-template-columns: 1fr;
   gap: 18px;
 } */
+
+/* ---------- High-contrast Elderly View ---------- */
+
+body.mode-accessible {
+  background: #f4f6f8;
+  color: #172033;
+}
+
+/* Dark header without using pure black */
+body.mode-accessible .header {
+  background: linear-gradient(135deg, #17324d 0%, #1c6e8c 100%);
+  border-bottom: 3px solid var(--accent-gold);
+}
+
+/* Cards remain clear but not harsh */
+body.mode-accessible .panel,
+body.mode-accessible .filter-bar,
+body.mode-accessible .kpi-card,
+body.mode-accessible .insight-card,
+body.mode-accessible .icon-filter-bar,
+body.mode-accessible .elder-only-summary,
+body.mode-accessible .table-wrap,
+body.mode-accessible #timeline {
+  background: #ffffff;
+  color: #172033;
+  border: 1.5px solid #a5b0ba;
+  box-shadow: 0 2px 8px rgba(23, 50, 77, 0.08);
+}
+
+body.mode-accessible .section-label {
+  color: #17324d;
+  font-weight: 700;
+}
+
+body.mode-accessible .section-label::after {
+  background: #8795a1;
+  height: 1.5px;
+}
+
+/* Supporting text remains readable */
+body.mode-accessible .panel-head .hint,
+body.mode-accessible .filter-group label,
+body.mode-accessible .font-size-control label {
+  color: #3f4d5a;
+  font-weight: 600;
+}
+
+/* Inputs have stronger boundaries */
+body.mode-accessible .filter-group select,
+body.mode-accessible .search-box input {
+  background: #ffffff;
+  color: #172033;
+  border: 2px solid #657582;
+}
+
+/* Buttons use visible but softer contrast */
+body.mode-accessible .reset-btn,
+body.mode-accessible .small-btn {
+  border: 2px solid #526675;
+  font-weight: 700;
+}
+
+body.mode-accessible .small-btn {
+  background: #ffffff;
+  color: #17324d;
+}
+
+body.mode-accessible .small-btn:hover {
+  background: #e8f1f5;
+}
+
+body.mode-accessible .reset-btn {
+  background: #f9e2d5;
+  color: #8d3308;
+  border-color: #b95a27;
+}
+
+/* Active filters */
+body.mode-accessible .chip {
+  background: #dcebef;
+  color: #17324d;
+  border: 1.5px solid #5f7d8a;
+  font-weight: 700;
+}
+
+/* Header controls */
+body.mode-accessible .view-toggle {
+  border: 1.5px solid rgba(255, 255, 255, 0.75);
+}
+
+body.mode-accessible .colour-toggle {
+  border: 1.5px solid rgba(255, 255, 255, 0.8);
+  font-size: calc(var(--elder-font-size) - 3px);
+}
+
+/* Stronger chart axes without pure black */
+body.mode-accessible .axis path,
+body.mode-accessible .axis line,
+body.mode-accessible .gantt-axis path,
+body.mode-accessible .gantt-axis line {
+  stroke: #657582 !important;
+  stroke-width: 1.3px;
+}
+
+body.mode-accessible .axis text,
+body.mode-accessible .gantt-axis text,
+body.mode-accessible .gantt-phase-label,
+body.mode-accessible .gantt-bar-label {
+  fill: #172033 !important;
+  font-weight: 600;
+}
+
+/* Timeline rows */
+body.mode-accessible .gantt-row-background {
+  fill: #ffffff;
+}
+
+body.mode-accessible .gantt-row-background.alternate {
+  fill: #f1f4f6;
+}
+
+body.mode-accessible .gantt-row-line {
+  stroke: #a5b0ba;
+}
+
+/* Readable table without a completely black header */
+body.mode-accessible table.data-table th {
+  background: #17324d;
+  color: #ffffff;
+}
+
+body.mode-accessible table.data-table td {
+  color: #172033;
+  border-bottom: 1px solid #c4ccd2;
+}
+
+/* Tooltip */
+body.mode-accessible #tooltip.d3-tooltip {
+  background: #17324d;
+  color: #ffffff;
+  border: 1px solid #ffffff;
+  box-shadow: 0 4px 14px rgba(23, 50, 77, 0.28);
+}
+
+body.mode-accessible #tooltip.d3-tooltip b {
+  color: #ffffff;
+}
+
+/* ---------- Header accessibility controls ---------- */
+
+.header-view-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.colour-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border-radius: 999px;
+  padding: 6px 11px;
+  font-family: "Poppins", sans-serif;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.colour-toggle:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.colour-toggle-switch {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.3);
+  transition: background 0.2s;
+}
+
+.colour-toggle-switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ffffff;
+  transition: transform 0.2s;
+}
+
+.colour-toggle[aria-pressed="true"] {
+  background: #ffffff;
+  color: var(--primary-dark);
+  border-color: #ffffff;
+}
+
+.colour-toggle[aria-pressed="true"] .colour-toggle-switch {
+  background: var(--accent-risk);
+}
+
+.colour-toggle[aria-pressed="true"] .colour-toggle-switch::after {
+  transform: translateX(16px);
+}
+
+@media (max-width: 700px) {
+  .header-view-controls {
+    width: 100%;
+    align-items: flex-start;
+  }
+}
+
+/* ---------- Colour-blind-friendly overrides ---------- */
+
+/* Change the Child View green header to blue when enabled */
+body.colour-blind-mode.mode-simplified .header {
+  background: linear-gradient(
+    135deg,
+    var(--primary-dark) 0%,
+    var(--primary) 100%
+  );
+}
+
+/* Early-stage button becomes blue instead of green */
+body.colour-blind-mode .icon-btn.green.active {
+  border-color: var(--primary);
+  background: var(--primary-pale);
+  color: var(--primary-dark);
+}
+
+/* Late-stage button becomes orange instead of red */
+body.colour-blind-mode .icon-btn.red.active {
+  border-color: var(--accent-risk);
+  background: var(--accent-risk-pale);
+  color: var(--accent-risk);
+}
+
+/* Child View headings should follow the blue palette */
+body.colour-blind-mode.mode-simplified .section-label {
+  color: var(--primary-dark);
+}
