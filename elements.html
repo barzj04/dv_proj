@@ -10,41 +10,24 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+<!-- Pull in the new component styles -->
+<link rel="stylesheet" href="style.css">
+
 <style>
-  :root {
-    --bg: #EDF1EF;
-    --surface: #FFFFFF;
-    --ink: #152238;
-    --ink-soft: #4A5A6B;
-    --primary: #1C6E8C;
-    --primary-dark: #0F4C5C;
-    --primary-pale: #DCEBEF;
-    --accent-risk: #C1440E;
-    --accent-risk-pale: #F5DDD1;
-    --accent-good: #4C956C;
-    --accent-good-pale: #DCEEE2;
-    --accent-gold: #B8860B;
-    --border: #D7DEDC;
-    --radius: 10px;
-    --shadow: 0 1px 2px rgba(21,34,56,.06), 0 4px 14px rgba(21,34,56,.05);
-  }
-
+  /* --- Strict 3x2 Grid Layout --- */
   body {
-    margin: 0; 
-    padding: 24px; 
-    background: var(--bg); 
-    color: var(--ink);
-    font-family: 'Poppins', sans-serif;
+    padding: 24px;
+    background: var(--bg);
   }
 
-  /* --- Strict 3-and-2 Grid Layout --- */
   .ui-container {
     display: grid;
-    /* 6 column grid allows easy 1/3 (span 2) and 1/2 (span 3) divisions */
+    /* 6 column grid allows easy 1/3 (span 2) divisions for exactly 3 panels per row */
     grid-template-columns: repeat(6, 1fr);
     gap: 16px;
     max-width: 1400px;
     margin: 0 auto;
+    /* Grid defaults to stretch, ensuring columns in the same row are the same height */
   }
 
   .ui-section {
@@ -55,26 +38,23 @@
     box-shadow: var(--shadow);
     display: flex;
     flex-direction: column;
+    justify-content: flex-start;
     gap: 16px;
   }
 
-  /* First Row: 3 Sections */
+  /* All sections now take exactly 1/3rd of the width */
   .section-third {
     grid-column: span 2;
   }
 
-  /* Second Row: 2 Sections */
-  .section-half {
-    grid-column: span 3;
-  }
-
   /* Responsive fallback for smaller screens */
   @media (max-width: 1024px) {
-    .section-third, .section-half {
+    .section-third {
       grid-column: span 6;
     }
   }
 
+  /* UI Kit specific helper classes (to avoid clashing with main site CSS) */
   .ui-title {
     font-family: 'IBM Plex Mono', monospace; 
     font-size: 11px; 
@@ -95,58 +75,30 @@
     align-items: flex-start; 
   }
   
-  /* --- Typography Section Styles --- */
-  .typo-row { display: flex; flex-direction: column; gap: 4px; padding-bottom: 10px; border-bottom: 1px dashed var(--border); }
+  .typo-row { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 4px; 
+    padding-bottom: 10px; 
+    border-bottom: 1px dashed var(--border); 
+  }
   .typo-row:last-child { border-bottom: none; padding-bottom: 0; }
   .typo-label { font-size: 10px; color: var(--ink-soft); font-family: 'IBM Plex Mono', monospace; text-transform: uppercase; }
-  
-  .typo-h1 { font-family: 'Poppins', sans-serif; font-size: 24px; font-weight: 600; color: var(--ink); margin: 0; line-height: 1.2; }
-  .typo-h3 { font-family: 'Poppins', sans-serif; font-size: 15px; font-weight: 600; color: var(--ink); margin: 0; }
-  .typo-h4 { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 600; margin: 0; }
-  .typo-eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--primary-dark); }
-  .typo-body { font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; color: var(--ink); }
 
-  /* --- Inputs & Dropdowns --- */
-  .filter-group { display: flex; flex-direction: column; gap: 3px; }
-  .filter-group label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-soft); font-weight: 600; margin: 0; }
-  .filter-group select { border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: 13px; font-family: 'IBM Plex Sans', sans-serif; background: #fff; color: var(--ink); min-width: 150px; cursor: pointer; }
+  /* FIX: Overrides the aggressive auto-margins from style.css that push elements off-grid */
+  .reset-btn, .icon-btn.reset {
+    margin-left: 0 !important;
+    align-self: auto !important;
+  }
 
-  .search-box { position: relative; width: 100%; max-width: 240px; }
-  .search-box input { background: #fff; border: 1px solid #CED4DA; color: var(--ink); padding: 8px 12px 8px 32px; border-radius: 8px; font-size: 13px; width: 100%; box-sizing: border-box; font-family: 'IBM Plex Sans', sans-serif; }
-  .search-box input::placeholder { color: #7A8A99; }
-  .search-box svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); stroke: #556b7a; opacity: .75; }
-
-  /* --- Buttons --- */
-  .reset-btn { background: var(--accent-risk-pale); color: var(--accent-risk); border: 1px solid #EAC2AC; padding: 8px 14px; border-radius: 6px; font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: 'IBM Plex Sans', sans-serif; white-space: nowrap; }
-  .reset-btn:hover { filter: brightness(.96); }
-
-  .small-btn { background: transparent; border: 1px solid var(--border); padding: 6px 8px; border-radius: 6px; font-size: 12px; cursor: pointer; color: var(--primary-dark); white-space: nowrap; }
-  .small-btn:hover { filter: brightness(.98); }
-
-  .view-toggle { display: inline-flex; background: rgba(28, 110, 140, 0.1); border: 1px solid var(--primary-pale); border-radius: 999px; padding: 3px; gap: 2px; }
-  .view-toggle button { border: none; background: transparent; color: var(--primary-dark); font-family: 'Poppins', sans-serif; font-size: 12.5px; font-weight: 600; padding: 5px 12px; border-radius: 999px; cursor: pointer; transition: .15s; }
-  .view-toggle button.active { background: var(--primary-dark); color: #fff; }
-
-  /* --- Icon Buttons (Simplified Mode) --- */
-  .icon-btn { border: 3px solid var(--border); background: #fff; border-radius: 12px; padding: 10px 14px; font-size: 13.5px; font-weight: 700; cursor: pointer; font-family: 'Poppins', sans-serif; color: var(--ink); display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 80px; transition: .15s; }
-  .icon-btn::before { content: attr(data-emoji); font-size: 24px; line-height: 1; }
-  .icon-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(15,23,42,.12); }
-  .icon-btn.active { border-color: var(--primary); background: var(--primary-pale); color: var(--primary-dark); }
-  .icon-btn.green.active { border-color: var(--accent-good); background: var(--accent-good-pale); color: #265A3D; }
-  .icon-btn.red.active { border-color: var(--accent-risk); background: var(--accent-risk-pale); color: var(--accent-risk); }
-  .icon-btn.reset { border-color: var(--accent-gold); background: #FBF3DF; color: #7A5B00; }
-
-  /* --- Tags, Chips & Badges --- */
-  .chip { background: var(--primary-pale); color: var(--primary-dark); font-size: 11.5px; font-weight: 600; padding: 5px 9px; border-radius: 999px; display: inline-flex; gap: 6px; align-items: center; cursor: pointer; white-space: nowrap; }
-  .chip:hover { background: #c9e3ea; }
-  
-  .tag { padding: 4px 9px; border-radius: 5px; font-size: 11px; font-weight: 600; font-family: 'IBM Plex Sans', sans-serif; display: inline-block; white-space: nowrap; }
-  .tag.dead { background: var(--accent-risk-pale); color: var(--accent-risk); }
-  .tag.alive { background: var(--accent-good-pale); color: #265A3D; }
-
-  .panel-badge { font-size: 10.5px; font-family: 'IBM Plex Mono', monospace; background: var(--primary-pale); color: var(--primary-dark); padding: 4px 8px; border-radius: 5px; white-space: nowrap; letter-spacing: .03em; display: inline-block; }
-  .panel-badge.adv { background: #F3E6C8; color: #7A5B00; }
-
+  /* Mocks the header gradient to showcase the header view toggle and accessible modes */
+  .mock-header-bg {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+    padding: 12px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+  }
 </style>
 </head>
 <body>
@@ -163,22 +115,33 @@
     
     <div class="typo-row">
       <span class="typo-label">Page Title</span>
-      <h1 class="typo-h1">Dashboard Overview</h1>
+      <div class="title-block">
+        <h1 style="color: var(--ink);">Dashboard Overview</h1>
+      </div>
     </div>
     
     <div class="typo-row">
       <span class="typo-label">Panel Headers</span>
-      <h3 class="typo-h3">Multivariate Patient Profile</h3>
+      <div class="panel-head" style="margin: 0;">
+        <div>
+          <h3>Multivariate Patient Profile</h3>
+          <div class="hint">Helper hint text goes here</div>
+        </div>
+      </div>
     </div>
 
     <div class="typo-row">
       <span class="typo-label">Insight Cards</span>
-      <h4 class="typo-h4">High-Risk Patient Group</h4>
+      <div class="insight-card" style="box-shadow: none; padding: 10px; border: none;">
+        <h4>High-Risk Patient Group</h4>
+      </div>
     </div>
 
-    <div class="typo-row">
+    <div class="typo-row" style="border: none;">
       <span class="typo-label">Eyebrows & Labels</span>
-      <div class="typo-eyebrow">Section Label &middot; 11.5px</div>
+      <div class="title-block">
+        <div class="eyebrow" style="color: var(--primary-dark); margin: 0;">Section Label &middot; 11.5px</div>
+      </div>
     </div>
   </div>
 
@@ -186,70 +149,111 @@
   <div class="ui-section section-third">
     <div class="ui-title">Form Controls</div>
     <div class="element-row" style="flex-direction: column; width: 100%;">
+      
       <div class="search-box">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input placeholder="Search ID&hellip;">
       </div>
+      
       <div class="filter-group" style="width: 100%; max-width: 240px;">
         <label>Stage Dropdown</label>
         <select><option>Select stage...</option></select>
       </div>
+      
       <div class="filter-group" style="width: 100%; max-width: 240px;">
         <label>Age Group</label>
         <select><option>Select age...</option></select>
       </div>
+
     </div>
   </div>
 
   <!-- 3. Icon Buttons -->
   <div class="ui-section section-third">
     <div class="ui-title">Simplified Mode Icons</div>
-    <div class="element-row">
-      <button class="icon-btn active" data-emoji="👨">Male</button>
-      <button class="icon-btn" data-emoji="👩">Female</button>
-      <button class="icon-btn green active" data-emoji="🟢">Early</button>
-      <button class="icon-btn red active" data-emoji="🔴">Late</button>
-      <button class="icon-btn reset" data-emoji="🔄">Reset</button>
+    <!-- We force mode-simplified here locally so the icon flex layout kicks in based on the stylesheet -->
+    <div class="mode-simplified">
+      <div class="icon-filter-bar" style="box-shadow: none; border: none; padding: 0;">
+        <div class="icon-filter-row">
+          <button class="icon-btn active" data-emoji="👨🏽">Male</button>
+          <button class="icon-btn" data-emoji="👩🏻">Female</button>
+          <button class="icon-btn green active" data-emoji="🟢">Early</button>
+          <button class="icon-btn red active" data-emoji="🔴">Late</button>
+          <button class="icon-btn reset" data-emoji="🔄">Reset</button>
+        </div>
+      </div>
     </div>
   </div>
 
 
   <!-- ========================================= -->
-  <!-- ROW 2: 2 SECTIONS (Each spans 1/2 width)  -->
+  <!-- ROW 2: 3 SECTIONS (Each spans 1/3 width)  -->
   <!-- ========================================= -->
 
-  <!-- 4. Standard Buttons (Now in the same row layout as Tags) -->
-  <div class="ui-section section-half">
+  <!-- 4. Standard Buttons -->
+  <div class="ui-section section-third">
     <div class="ui-title">Standard Buttons & Toggles</div>
     <div class="element-row">
       <button class="reset-btn">Reset Filters</button>
       <button class="small-btn">Drill Down</button>
       <button class="small-btn">ℹ&nbsp; Info</button>
     </div>
+    
     <div class="element-row" style="margin-top: 8px;">
-      <div class="view-toggle">
-        <button>Simplified</button>
-        <button class="active">Standard</button>
-        <button>High-Contrast</button>
+      <div class="mock-header-bg">
+        <div class="view-toggle">
+          <button>Child View</button>
+          <button class="active">Adult View</button>
+          <button>Elderly View</button>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- 5. Tags, Chips & Badges -->
-  <div class="ui-section section-half">
+  <div class="ui-section section-third">
     <div class="ui-title">Tags, Chips & Badges</div>
+    
     <div class="element-row">
-      <div class="chip">Stage III/IV &times;</div>
-      <div class="chip">Male &times;</div>
+      <div class="active-filters">
+        <div class="chip">Stage III/IV &times;</div>
+        <div class="chip">Male &times;</div>
+      </div>
     </div>
+    
     <div class="element-row" style="margin-top: 8px;">
       <span class="tag alive">Alive</span>
       <span class="tag dead">Dead</span>
     </div>
+    
     <div class="element-row" style="margin-top: 8px;">
       <span class="panel-badge">Standard Badge</span>
       <span class="panel-badge adv">Advanced Badge</span>
     </div>
+  </div>
+
+  <!-- 6. High Contrast Elements (New) -->
+  <div class="ui-section section-third">
+    <div class="ui-title">Accessible / High Contrast</div>
+    
+    <div class="typo-row">
+      <span class="typo-label">Elderly View Header Gradient</span>
+      <div class="mock-header-bg" style="background: linear-gradient(135deg, #3c2a5d 0%, #6b4e8a 100%);">
+         <h1 style="color: #fff; font-size: 16px; margin: 0; letter-spacing: 0;">High Contrast Header</h1>
+      </div>
+    </div>
+
+    <div class="typo-row" style="border: none;">
+      <span class="typo-label">Font Size Controller</span>
+      <div class="font-size-control" style="display: flex;">
+        <label for="elderFontSizeMock">
+          Font Size
+          <output id="elderFontSizeValueMock" for="elderFontSizeMock">19px</output>
+        </label>
+        <input type="range" id="elderFontSizeMock" min="16" max="22" step="1" value="19" aria-label="Adjust elderly view text size">
+      </div>
+    </div>
+
   </div>
 
 </div>
