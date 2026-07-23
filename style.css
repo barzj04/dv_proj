@@ -760,38 +760,115 @@ svg text {
   line-height: 1.5;
   max-width: 220px;
 }
+
+#tooltip.d3-tooltip {
+  position: fixed !important;
+  display: none;
+  width: auto;
+  max-width: 300px;
+  padding: 10px 12px;
+  background: #152238;
+  color: #ffffff;
+  border-radius: 7px;
+  font-family: "IBM Plex Sans", sans-serif;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
+  pointer-events: none;
+  z-index: 999999;
+  box-shadow: 0 6px 18px rgba(21, 34, 56, 0.25);
+}
+
 .d3-tooltip b {
   font-family: Arial, Helvetica, sans-serif;
   color: #9ce0c8;
 }
 
+/* Timeline container */
 #timeline {
-  border: none !important;
-  font-family: "IBM Plex Sans";
+  height: 390px;
+  min-height: 390px;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-family: "IBM Plex Sans", sans-serif;
+  overflow: hidden;
 }
-.vis-item {
-  border-radius: 6px;
-  border-width: 2px !important;
+
+#timeline .vis-timeline {
+  border: none;
+}
+
+/* Phase names on the left */
+#timeline .vis-label {
+  min-height: 50px;
+  background: #f7faf9;
+  border-bottom: 1px solid var(--border);
+  color: var(--ink);
+}
+
+#timeline .vis-label .vis-inner {
+  padding: 15px 12px;
   font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
 }
-.vis-item.milestone {
-  background: var(--primary-pale);
-  border-color: var(--primary);
-  color: var(--primary-dark);
+
+/* Timeline rows */
+#timeline .vis-group {
+  min-height: 50px;
+  border-bottom: 1px solid var(--border);
 }
-.vis-item.done {
+
+/* Phase bars */
+#timeline .vis-item {
+  min-height: 32px;
+  border-width: 1.5px !important;
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(21, 34, 56, 0.1);
+  overflow: hidden;
+}
+
+#timeline .vis-item-content {
+  width: 100%;
+  padding: 7px 9px;
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Phase colours */
+#timeline .vis-item.done {
   background: var(--accent-good-pale);
   border-color: var(--accent-good);
   color: #265a3d;
 }
-.vis-item.upcoming {
-  background: #f3e6c8;
-  border-color: var(--accent-gold);
-  color: #7a5b00;
+
+#timeline .vis-item.milestone {
+  background: var(--primary-pale);
+  border-color: var(--primary);
+  color: var(--primary-dark);
 }
-.vis-time-axis .vis-text {
+
+#timeline .vis-item.upcoming {
+  background: #fbf3df;
+  border-color: var(--accent-gold);
+  color: #735700;
+}
+
+/* Date axis */
+#timeline .vis-time-axis .vis-text {
   color: var(--ink-soft);
-  font-size: 11px;
+  font-size: 10px;
+}
+
+#timeline .vis-time-axis .vis-text.vis-major {
+  color: var(--primary-dark);
+  font-weight: 600;
 }
 
 .table-wrap {
@@ -986,6 +1063,46 @@ body.mode-accessible .header {
   width: 180px;
   cursor: pointer;
   accent-color: #6b4e8a;
+}
+
+.elderly-filter-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  margin-left: auto;
+}
+
+/* Adult View: reset remains on the first row */
+body:not(.mode-accessible) .elderly-filter-actions {
+  margin-left: auto;
+}
+
+/* Elderly View: move actions onto a new row */
+body.mode-accessible .elderly-filter-actions {
+  flex-basis: 100%;
+  width: 100%;
+  justify-content: flex-end;
+  align-items: flex-end;
+  margin-left: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+/* Prevent the reset button's old auto margin from interfering */
+body.mode-accessible .elderly-filter-actions .reset-btn {
+  margin-left: 0;
+}
+
+/* Keep the slider compact */
+body.mode-accessible .font-size-control {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 200px;
+}
+
+body.mode-accessible .font-size-control input[type="range"] {
+  width: 200px;
 }
 
 /* Dynamic Elderly View typography */

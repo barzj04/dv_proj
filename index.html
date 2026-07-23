@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="style.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-timeline/7.7.3/vis-timeline-graph2d.min.js"></script>
+    <script src="https://unpkg.com/vis-timeline/standalone/umd/vis-timeline-graph2d.min.js"></script>
     <link
       href="https://cdnjs.cloudflare.com/ajax/libs/vis-timeline/7.7.3/vis-timeline-graph2d.min.css"
       rel="stylesheet"
@@ -145,27 +145,31 @@
             <option value="">All</option>
           </select>
         </div>
-        <div class="font-size-control elderly-only">
-          <label for="elderFontSize">
-            Font Size
-            <output id="elderFontSizeValue" for="elderFontSize">17px</output>
-          </label>
-
-          <input
-            type="range"
-            id="elderFontSize"
-            min="16"
-            max="22"
-            step="1"
-            value="17"
-            aria-label="Adjust elderly view text size"
-            aria-valuemin="16"
-            aria-valuemax="24"
-            aria-valuenow="17"
-          />
-        </div>
         <div class="active-filters" id="activeFilters"></div>
-        <button class="reset-btn" id="resetBtn">Reset</button>
+
+        <div class="elderly-filter-actions">
+          <div class="font-size-control elderly-only">
+            <label for="elderFontSize">
+              Font Size
+              <output id="elderFontSizeValue" for="elderFontSize">17px</output>
+            </label>
+
+            <input
+              type="range"
+              id="elderFontSize"
+              min="16"
+              max="22"
+              step="1"
+              value="17"
+              aria-label="Adjust elderly view text size"
+              aria-valuemin="16"
+              aria-valuemax="22"
+              aria-valuenow="17"
+            />
+          </div>
+
+          <button class="reset-btn" id="resetBtn">Reset</button>
+        </div>
       </div>
 
       <div class="section-label adult-only elder-hide">

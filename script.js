@@ -264,6 +264,21 @@ d3.select("#resetBtn").on("click", () => {
     (id) => d3.select(id).property("value", ""),
   );
   d3.select("#patientSearch").property("value", "");
+  const defaultFontSize = 17;
+  const elderFontSizeValue = document.getElementById("elderFontSizeValue");
+  const elderFontSizeSlider = document.getElementById("elderFontSize");
+  elderFontSizeSlider.value = defaultFontSize;
+  document.documentElement.style.setProperty(
+    "--elder-font-size",
+    `${defaultFontSize}px`,
+  );
+  elderFontSizeValue.textContent = `${defaultFontSize}px`;
+  elderFontSizeSlider.setAttribute("aria-valuenow", defaultFontSize);
+  elderFontSizeSlider.setAttribute(
+    "aria-valuetext",
+    `${defaultFontSize} pixels`,
+  );
+
   syncIconButtons();
   refreshAll();
 });
@@ -1355,25 +1370,120 @@ const TIMELINE_PHASES = [
 ];
 function renderTimeline() {
   const container = document.getElementById("timeline");
-  const items = new vis.DataSet(
-    TIMELINE_PHASES.map((p) => ({
-      id: p.id,
-      content: `<b>${p.title}</b>`,
-      start: p.start,
-      end: p.end,
-      className: p.className,
-      title: p.desc,
+  container.innerHTML = "";
+
+  const formatTimelineDate = (dateString) =>
+    new Intl.DateTimeFormat("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }).format(new Date(`${dateString}T00:00:00`));
+
+  const groups = new vis.DataSet(
+    TIMELINE_PHASES.map((phase) => ({
+      id: phase.id,
+      order: phase.id,
+      content: phase.title,
     })),
   );
+
+  const items = new vis.DataSet(
+    TIMELINE_PHASES.map((phase) => ({
+      id: phase.id,
+      group: phase.id,
+      start: phase.start,
+      end: phase.end,
+
+      /*
+       * Give every bar a unique CSS class.
+       * This allows normal DOM hover detection.
+       */
+      className: `${phase.className} timeline-phase timeline-phase-${phase.id}`,
+
+      content: `Phase ${phase.id}`,
+    })),
+  );
+
   const options = {
     stack: false,
-    showCurrentTime: true,
-    margin: { item: 14 },
+    groupOrder: "order",
+    showCurrentTime: false,
+
+    /* Built-in Vis tooltip is not used */
+    showTooltips: false,
+
     orientation: "top",
+    start: "2026-02-10",
+    end: "2026-07-20",
     min: "2026-02-10",
     max: "2026-07-20",
+
+    margin: {
+      item: {
+        horizontal: 0,
+        vertical: 8,
+      },
+      axis: 10,
+    },
+
+    editable: false,
+    selectable: false,
   };
-  new vis.Timeline(container, items, options);
+
+  new vis.Timeline(container, items, groups, options);
+
+  function findHoveredPhase(target) {
+    /*
+     * Find the Vis Timeline bar under the pointer.
+     */
+    const phaseBar = target.closest?.(".timeline-phase");
+
+    if (!phaseBar || !container.contains(phaseBar)) {
+      return null;
+    }
+
+    /*
+     * Find a class such as timeline-phase-3.
+     */
+    const phaseClass = Array.from(phaseBar.classList).find((className) =>
+      /^timeline-phase-\d+$/.test(className),
+    );
+
+    if (!phaseClass) {
+      return null;
+    }
+
+    const phaseId = Number(phaseClass.replace("timeline-phase-", ""));
+
+    return TIMELINE_PHASES.find((phase) => phase.id === phaseId);
+  }
+
+  function displayTimelineTooltip(event) {
+    const phase = findHoveredPhase(event.target);
+
+    if (!phase) {
+      hideTip();
+      return;
+    }
+
+    showTip(
+      `
+        <b>${phase.title}</b><br>
+        Start: ${formatTimelineDate(phase.start)}<br>
+        End: ${formatTimelineDate(phase.end)}<br><br>
+        ${phase.desc}
+      `,
+      event,
+    );
+  }
+
+  /*
+   * pointerover makes the tooltip appear immediately.
+   * pointermove makes it follow the cursor.
+   */
+  container.onpointerover = displayTimelineTooltip;
+  container.onpointermove = displayTimelineTooltip;
+  container.onpointerleave = hideTip;
 }
 
 function refreshAll() {
