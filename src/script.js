@@ -46,7 +46,7 @@ function smokingHistory(value) {
   return "40+ pack-years";
 }
 let DATA = { records: [] };
-d3.csv("Esophageal_Dataset_Cleaned.csv", (d) => {
+d3.csv("/Esophageal_Dataset_Cleaned.csv", (d) => {
   const parsed = d3.autoType(d);
   return {
     id: parsed.patient_barcode,
