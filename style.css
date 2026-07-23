@@ -671,15 +671,19 @@ svg text {
 
 #chartRisk {
   display: grid;
-  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
-  align-items: start;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
 }
 #chartRisk {
   display: grid;
-  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  grid-template-columns: 1fr;
   gap: 12px;
   align-items: stretch;
+  width: 100%;
+  min-width: 0;
 }
 #chartRisk .risk-card {
   background: #fbfcfc;
@@ -1549,5 +1553,121 @@ body.mode-accessible .footer-year {
 
   .footer-divider {
     display: none;
+  }
+}
+
+/* ---------- Responsive dashboard fixes ---------- */
+
+/* Risk and resource section */
+.risk-outcome-grid {
+  margin-top: 4px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+}
+
+.risk-outcome-grid > .panel {
+  min-width: 0;
+  width: 100%;
+}
+
+/* Prevent panel headings and badges from forcing cards wider */
+.panel-head > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.panel-head h3,
+.panel-head .hint {
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.panel-badge {
+  flex-shrink: 0;
+  max-width: 100%;
+}
+
+/* Resource chart */
+.resource-panel {
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+#chartResource {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* Stack the risk and resource panels before they become too narrow */
+@media (max-width: 1100px) {
+  .risk-outcome-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Mobile layout ---------- */
+
+@media (max-width: 700px) {
+  /* Adult KPI cards: exactly two columns */
+  body.mode-standard .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  body.mode-standard .kpi-card {
+    min-width: 0;
+    padding: 14px 12px;
+  }
+
+  body.mode-standard .kpi-card .label {
+    font-size: 10px;
+    line-height: 1.35;
+    overflow-wrap: break-word;
+  }
+
+  body.mode-standard .kpi-card .value {
+    font-size: 25px;
+  }
+
+  body.mode-standard .kpi-card .unit {
+    font-size: 11px;
+  }
+
+  /* Stack heading badge below the heading */
+  .panel-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 7px;
+  }
+
+  .panel-badge {
+    align-self: flex-start;
+    white-space: normal;
+    overflow-wrap: break-word;
+    line-height: 1.35;
+  }
+
+  /* Slightly reduce panel padding to increase chart space */
+  .panel {
+    padding: 14px 12px 12px;
+  }
+}
+
+/* Very narrow phones */
+@media (max-width: 380px) {
+  body.mode-standard .kpi-grid {
+    gap: 8px;
+  }
+
+  body.mode-standard .kpi-card {
+    padding: 12px 9px;
+  }
+
+  body.mode-standard .kpi-card .value {
+    font-size: 22px;
   }
 }

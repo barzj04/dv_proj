@@ -12,6 +12,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="responsive_fix.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
   </head>
@@ -305,14 +306,7 @@
       <div class="section-label adult-only elder-hide">
         Risk Factors &amp; Outcomes
       </div>
-      <div
-        class="grid g2 adult-only elder-hide"
-        style="
-          margin-top: 4px;
-          grid-template-columns: 1fr 1fr;
-          align-items: start;
-        "
-      >
+      <div class="grid g2 adult-only elder-hide risk-outcome-grid">
         <div class="panel">
           <div class="panel-head">
             <div>
@@ -323,17 +317,9 @@
             </div>
             <span class="panel-badge">Mortality comparison</span>
           </div>
-          <div
-            id="chartRisk"
-            style="
-              display: flex;
-              flex-wrap: wrap;
-              gap: 10px;
-              align-items: flex-start;
-            "
-          ></div>
+          <div id="chartRisk"></div>
         </div>
-        <div class="panel" style="height: 100%">
+        <div class="panel resource-panel">
           <div class="panel-head">
             <div>
               <h3>Resource Utilization: Avg. Positive Lymph Nodes by Stage</h3>
@@ -343,7 +329,7 @@
             </div>
             <span class="panel-badge">Resource utilization</span>
           </div>
-          <svg id="chartResource" width="100%" height="100%"></svg>
+          <svg id="chartResource" width="100%" height="230"></svg>
         </div>
       </div>
 
