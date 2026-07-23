@@ -1370,120 +1370,162 @@ const TIMELINE_PHASES = [
 ];
 function renderTimeline() {
   const container = document.getElementById("timeline");
+
+  if (!container) return;
+
+  // Clear the old chart before drawing
   container.innerHTML = "";
 
-  const formatTimelineDate = (dateString) =>
-    new Intl.DateTimeFormat("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }).format(new Date(`${dateString}T00:00:00`));
+  const parseDate = d3.timeParse("%Y-%m-%d");
+  const formatDate = d3.timeFormat("%d %b %Y");
 
-  const groups = new vis.DataSet(
-    TIMELINE_PHASES.map((phase) => ({
-      id: phase.id,
-      order: phase.id,
-      content: phase.title,
-    })),
-  );
+  // Convert the date strings into JavaScript Date objects
+  const phases = TIMELINE_PHASES.map((phase) => ({
+    ...phase,
+    startDate: parseDate(phase.start),
+    endDate: parseDate(phase.end),
+  }));
 
-  const items = new vis.DataSet(
-    TIMELINE_PHASES.map((phase) => ({
-      id: phase.id,
-      group: phase.id,
-      start: phase.start,
-      end: phase.end,
-
-      /*
-       * Give every bar a unique CSS class.
-       * This allows normal DOM hover detection.
-       */
-      className: `${phase.className} timeline-phase timeline-phase-${phase.id}`,
-
-      content: `Phase ${phase.id}`,
-    })),
-  );
-
-  const options = {
-    stack: false,
-    groupOrder: "order",
-    showCurrentTime: false,
-
-    /* Built-in Vis tooltip is not used */
-    showTooltips: false,
-
-    orientation: "top",
-    start: "2026-02-10",
-    end: "2026-07-20",
-    min: "2026-02-10",
-    max: "2026-07-20",
-
-    margin: {
-      item: {
-        horizontal: 0,
-        vertical: 8,
-      },
-      axis: 10,
-    },
-
-    editable: false,
-    selectable: false,
+  const margin = {
+    top: 55,
+    right: 30,
+    bottom: 20,
+    left: 230,
   };
 
-  new vis.Timeline(container, items, groups, options);
+  const rowHeight = 54;
+  const chartWidth = Math.max(container.clientWidth, 900);
+  const innerHeight = phases.length * rowHeight;
+  const chartHeight = margin.top + innerHeight + margin.bottom;
 
-  function findHoveredPhase(target) {
-    /*
-     * Find the Vis Timeline bar under the pointer.
-     */
-    const phaseBar = target.closest?.(".timeline-phase");
+  const svg = d3
+    .select(container)
+    .append("svg")
+    .attr("class", "gantt-svg")
+    .attr("width", chartWidth)
+    .attr("height", chartHeight)
+    .attr("viewBox", `0 0 ${chartWidth} ${chartHeight}`);
 
-    if (!phaseBar || !container.contains(phaseBar)) {
-      return null;
-    }
+  // Find the earliest start date and latest end date
+  const earliestDate = d3.min(phases, (d) => d.startDate);
+  const latestDate = d3.max(phases, (d) => d.endDate);
 
-    /*
-     * Find a class such as timeline-phase-3.
-     */
-    const phaseClass = Array.from(phaseBar.classList).find((className) =>
-      /^timeline-phase-\d+$/.test(className),
-    );
+  const xScale = d3
+    .scaleTime()
+    .domain([
+      d3.timeDay.offset(earliestDate, -5),
+      d3.timeDay.offset(latestDate, 5),
+    ])
+    .range([margin.left, chartWidth - margin.right]);
 
-    if (!phaseClass) {
-      return null;
-    }
+  // Draw alternating row backgrounds
+  svg
+    .selectAll(".gantt-row-background")
+    .data(phases)
+    .enter()
+    .append("rect")
+    .attr("class", (d, i) =>
+      i % 2 === 0 ? "gantt-row-background" : "gantt-row-background alternate",
+    )
+    .attr("x", 0)
+    .attr("y", (d, i) => margin.top + i * rowHeight)
+    .attr("width", chartWidth)
+    .attr("height", rowHeight);
 
-    const phaseId = Number(phaseClass.replace("timeline-phase-", ""));
+  // Draw the date axis
+  const xAxis = d3
+    .axisTop(xScale)
+    .ticks(d3.timeMonth.every(1))
+    .tickFormat(d3.timeFormat("%b %Y"))
+    .tickSize(-innerHeight);
 
-    return TIMELINE_PHASES.find((phase) => phase.id === phaseId);
-  }
+  svg
+    .append("g")
+    .attr("class", "gantt-axis")
+    .attr("transform", `translate(0, ${margin.top})`)
+    .call(xAxis);
 
-  function displayTimelineTooltip(event) {
-    const phase = findHoveredPhase(event.target);
+  // Draw row separator lines
+  svg
+    .selectAll(".gantt-row-line")
+    .data(phases)
+    .enter()
+    .append("line")
+    .attr("class", "gantt-row-line")
+    .attr("x1", 0)
+    .attr("x2", chartWidth)
+    .attr("y1", (d, i) => margin.top + (i + 1) * rowHeight)
+    .attr("y2", (d, i) => margin.top + (i + 1) * rowHeight);
 
-    if (!phase) {
+  // Draw phase names on the left
+  svg
+    .selectAll(".gantt-phase-label")
+    .data(phases)
+    .enter()
+    .append("text")
+    .attr("class", "gantt-phase-label")
+    .attr("x", 15)
+    .attr("y", (d, i) => margin.top + i * rowHeight + rowHeight / 2)
+    .attr("dominant-baseline", "middle")
+    .text((d) => d.title);
+
+  // Draw the Gantt bars
+  svg
+    .selectAll(".gantt-bar")
+    .data(phases)
+    .enter()
+    .append("rect")
+    .attr("class", (d) => `gantt-bar ${d.className}`)
+    .attr("x", (d) => xScale(d.startDate))
+    .attr("y", (d, i) => margin.top + i * rowHeight + 10)
+    .attr("width", (d) => {
+      // Add one day so the end date is visually included
+      const inclusiveEndDate = d3.timeDay.offset(d.endDate, 1);
+
+      return Math.max(5, xScale(inclusiveEndDate) - xScale(d.startDate));
+    })
+    .attr("height", 34)
+    .attr("rx", 6)
+    .attr("ry", 6)
+    .on("mouseenter", function (event, d) {
+      showTip(
+        `
+      <b>${d.title}</b><br>
+      Start date: ${formatDate(d.startDate)}<br>
+      End date: ${formatDate(d.endDate)}<br><br>
+      <b>Description</b><br>
+      ${d.desc}
+    `,
+        event,
+      );
+    })
+    .on("mousemove", function (event, d) {
+      showTip(
+        `
+          <b>${d.title}</b><br>
+          Start date: ${formatDate(d.startDate)}<br>
+          End date: ${formatDate(d.endDate)}<br><br>
+          <b>Description</b><br>
+          ${d.desc}
+        `,
+        event,
+      );
+    })
+    .on("mouseleave", function () {
       hideTip();
-      return;
-    }
+    });
 
-    showTip(
-      `
-        <b>${phase.title}</b><br>
-        Start: ${formatTimelineDate(phase.start)}<br>
-        End: ${formatTimelineDate(phase.end)}<br><br>
-        ${phase.desc}
-      `,
-      event,
-    );
-  }
-
-  /*
-   * pointerover makes the tooltip appear immediately.
-   * pointermove makes it follow the cursor.
-   */
-  container.onpointerover = displayTimelineTooltip;
-  container.onpointermove = displayTimelineTooltip;
-  container.onpointerleave = hideTip;
+  // Add short labels inside the bars
+  svg
+    .selectAll(".gantt-bar-label")
+    .data(phases)
+    .enter()
+    .append("text")
+    .attr("class", "gantt-bar-label")
+    .attr("x", (d) => xScale(d.startDate) + 9)
+    .attr("y", (d, i) => margin.top + i * rowHeight + 27)
+    .attr("dominant-baseline", "middle")
+    .text((d) => `Phase ${d.id}`);
 }
 
 function refreshAll() {
